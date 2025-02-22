@@ -1,5 +1,6 @@
 .DS_Store
 __pycache__/
 node_configs/*
+!node_configs/.gitkeep
 config.log
 config.json

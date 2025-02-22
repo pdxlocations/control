@@ -1,0 +1,16 @@
+2025-02-21 20:48:40,610 - ERROR - Error saving changes: 'builtin_function_or_method' object has no attribute 'interface'
+2025-02-21 20:48:40,611 - INFO - Changes Saved
+2025-02-21 20:55:54,349 - INFO - Updated User Settings with Long Name: test node, Short Name: 1adc, Licensed Mode: False
+2025-02-21 20:55:54,350 - INFO - Changes Saved
+2025-02-21 21:04:47,908 - INFO - Node Info not available
+2025-02-21 21:06:10,906 - INFO - Node Info not available
+2025-02-21 21:08:19,034 - INFO - Node Info not available
+2025-02-21 21:31:43,756 - ERROR - Failed to export menu structure: Object of type FieldDescriptor is not JSON serializable
+2025-02-21 21:32:53,861 - ERROR - Failed to export menu structure: Object of type FieldDescriptor is not JSON serializable
+2025-02-21 22:03:34,347 - WARNING - Config item 'gps_attempt_time' not found in config category 'power'.
+2025-02-21 22:03:34,347 - INFO - Updated power.wait_bluetooth_secs to 61
+2025-02-21 22:03:34,453 - INFO - Changes written to config category: power
+2025-02-21 22:03:34,453 - INFO - Changes Saved
+2025-02-21 22:22:56,943 - INFO - Updated device.role to 1
+2025-02-21 22:22:57,047 - INFO - Changes written to config category: device
+2025-02-21 22:22:57,048 - INFO - Changes Saved
