@@ -58,7 +58,7 @@ def get_text_input(prompt):
 def get_repeated_input(current_value):
     cvalue = current_value
     height = 10
-    width = 60
+    width = 80
     start_y = (curses.LINES - height) // 2
     start_x = (curses.COLS - width) // 2
 
@@ -102,7 +102,7 @@ def get_fixed32_input(current_value):
     cvalue = current_value
     current_value = str(ipaddress.IPv4Address(current_value))
     height = 10
-    width = 60
+    width = 80
     start_y = (curses.LINES - height) // 2
     start_x = (curses.COLS - width) // 2
 
@@ -160,7 +160,7 @@ def get_list_input(prompt, current_option, list_options):
     selected_index = list_options.index(current_option) if current_option in list_options else 0
 
     height = min(len(list_options) + 5, curses.LINES - 2)
-    width = 60
+    width = 80
     start_y = (curses.LINES - height) // 2
     start_x = (curses.COLS - width) // 2
 

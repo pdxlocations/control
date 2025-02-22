@@ -5,7 +5,7 @@ from ui.colors import get_color, setup_colors, COLOR_MAP
 from default_config import format_json_single_line_arrays, loaded_config
 from input_handlers import get_list_input
 
-width = 60
+width = 80
 save_option_text = "Save Changes"
 
 def edit_color_pair(key, current_value):
@@ -20,7 +20,7 @@ def edit_color_pair(key, current_value):
     return [fg_color, bg_color]
 
 def edit_value(key, current_value):
-    width = 60
+    width = 80
     height = 10
     input_width = width - 16  # Allow space for "New Value: "
     start_y = (curses.LINES - height) // 2
