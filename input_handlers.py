@@ -5,7 +5,7 @@ from ui.colors import get_color
 def get_text_input(prompt):
     # Calculate the dynamic height and width for the input window
     height = 7  # Fixed height for input prompt
-    width = 60
+    width = 80
     start_y = (curses.LINES - height) // 2
     start_x = (curses.COLS - width) // 2
 

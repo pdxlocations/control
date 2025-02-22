@@ -1,6 +1,7 @@
 import curses
 import logging
 import os
+import textwrap
 
 from save_to_radio import save_changes
 from utilities.config_io import config_export, config_import
@@ -52,7 +53,7 @@ def parse_ini_file(ini_file_path):
             else:
                 # If only key is present with no readable/help text
                 field_mapping[key] = key
-                help_text[key] = None
+                help_text[key] = ""
 
     return field_mapping, help_text
 
@@ -62,12 +63,13 @@ field_mapping, help_text = parse_ini_file(translation_file)
 
 
 
-def display_menu(current_menu, menu_path, selected_index, show_save_option):
+def display_menu(current_menu, menu_path, selected_index, show_save_option, help_text):
+    global help_win
 
     # Calculate the dynamic height based on the number of menu items
     num_items = len(current_menu) + (1 if show_save_option else 0)  # Add 1 for the "Save Changes" option if applicable
-    height = min(curses.LINES - 2, num_items + 5)  # Ensure the menu fits within the terminal height
-    start_y = (curses.LINES - height) // 2
+    height = min(curses.LINES - 2 - 6, num_items + 5)  # Ensure the menu fits within the terminal height
+    start_y = ((curses.LINES - height) // 2) - 4 #to center with help window
     start_x = (curses.COLS - width) // 2
 
     # Create a new curses window with dynamic dimensions
@@ -115,15 +117,48 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option):
         save_position = height - 2
         menu_win.addstr(save_position, (width - len(save_option)) // 2, save_option, get_color("settings_save", reverse = (selected_index == len(current_menu))))
 
+
+
+
+    # FOR STANDALONE CONFIGURE
+    # Create the help window
+    # Erase the previous help window if it exists
+    if 'help_win' in globals():
+        help_win.erase()
+        help_win.refresh()
+
+    # Create a new help window
+    help_win = curses.newwin(6, width, start_y + height, start_x)
+    help_win.bkgd(get_color("background"))
+    help_win.attrset(get_color("window_frame"))
+    help_win.border()
+
+    # Display initial help text
+    selected_option = list(current_menu.keys())[selected_index] if current_menu else None
+    help_content = help_text.get(selected_option) or "No help available."
+    wrapped_help = textwrap.wrap(help_content, width=width - 6)  # Wrap help text
+
+    # Limit to 4 lines of help text and display
+    for idx, line in enumerate(wrapped_help[:4]):
+        help_win.addstr(1 + idx, 2, line, get_color("settings_default"))
+
+    help_win.refresh()
+
+
     menu_win.refresh()
     menu_pad.refresh(0, 0,
                      menu_win.getbegyx()[0] + 3, menu_win.getbegyx()[1] + 4,
                      menu_win.getbegyx()[0] + 3 + menu_win.getmaxyx()[0] - 5 - (2 if show_save_option else 0), menu_win.getbegyx()[1] + menu_win.getmaxyx()[1] - 8)
     
+
+
+
+
+
     return menu_win, menu_pad
 
 
-def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_pad):
+def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_pad, help_win, help_text):
 
     if(old_idx == new_idx): # no-op
         return
@@ -146,6 +181,22 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
     menu_pad.refresh(start_index, 0,
                      menu_win.getbegyx()[0] + 3, menu_win.getbegyx()[1] + 4,
                      menu_win.getbegyx()[0] + 3 + menu_win.getmaxyx()[0] - 5 - (2 if show_save_option else 0), menu_win.getbegyx()[1] + menu_win.getmaxyx()[1] - 8)
+
+
+    # Update help window
+    help_win.erase()
+    help_win.border()
+    selected_option = options[new_idx] if new_idx < len(options) else None
+    help_content = help_text.get(selected_option) or "No help available."
+
+    # Wrap the help text
+    wrapped_help = textwrap.wrap(help_content, width=width - 6)
+
+    # Display wrapped help text
+    for idx, line in enumerate(wrapped_help[:4]):  # Limit to 4 lines
+        help_win.addstr(1 + idx, 2, line, get_color("settings_default"))
+    help_win.refresh()
+
 
 def settings_menu(stdscr, interface):
     curses.update_lines_cols()
@@ -173,7 +224,7 @@ def settings_menu(stdscr, interface):
             )
 
             # Display the menu
-            menu_win, menu_pad = display_menu(current_menu, menu_path, selected_index, show_save_option)
+            menu_win, menu_pad = display_menu(current_menu, menu_path, selected_index, show_save_option, help_text)
 
             need_redraw = False
 
@@ -185,12 +236,12 @@ def settings_menu(stdscr, interface):
         if key == curses.KEY_UP:
             old_selected_index = selected_index
             selected_index = max_index if selected_index == 0 else selected_index - 1
-            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad)
+            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad, help_win, help_text)
             
         elif key == curses.KEY_DOWN:
             old_selected_index = selected_index
             selected_index = 0 if selected_index == max_index else selected_index + 1
-            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad)
+            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad, help_win, help_text)
 
         elif key == curses.KEY_RESIZE:
             need_redraw = True
@@ -199,7 +250,7 @@ def settings_menu(stdscr, interface):
         elif key == ord("\t") and show_save_option:
             old_selected_index = selected_index
             selected_index = max_index
-            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad)
+            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad, help_win, help_text)
 
         elif key == curses.KEY_RIGHT or key == ord('\n'):
             need_redraw = True
