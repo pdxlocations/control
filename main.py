@@ -2,6 +2,7 @@ import curses
 import logging
 import os
 import textwrap
+import re
 
 from save_to_radio import save_changes
 from utilities.config_io import config_export, config_import
@@ -21,6 +22,31 @@ sensitive_settings = ["Reboot", "Reset Node DB", "Shutdown", "Factory Reset"]
 locals_dir = os.path.dirname(os.path.abspath(__file__))
 translation_file = os.path.join(locals_dir, "localisations", "en.ini")
 
+
+
+def transform_menu_path(menu_path):
+    """
+    Applies path replacements and normalizes entries in the menu path.
+    """
+    path_replacements = {
+        "Radio Settings": "config",
+        "Module Settings": "module"
+    }
+
+    transformed_path = []
+    for part in menu_path[1:]:  # Skip 'Main Menu'
+        # Apply fixed replacements
+        part = path_replacements.get(part, part)
+
+        # Normalize entries like "Channel 1", "Channel 2", etc.
+        if re.match(r'Channel\s+\d+', part, re.IGNORECASE):
+            part = "channel"
+
+        transformed_path.append(part)
+
+    return transformed_path
+
+
 def parse_ini_file(ini_file_path):
     field_mapping = {}
     help_text = {}
@@ -34,7 +60,7 @@ def parse_ini_file(ini_file_path):
             if not line or line.startswith(';') or line.startswith('#'):
                 continue
 
-            # Handle sections like [User Config]
+            # Handle sections like [config.device]
             if line.startswith('[') and line.endswith(']'):
                 current_section = line[1:-1]
                 continue
@@ -43,17 +69,26 @@ def parse_ini_file(ini_file_path):
             parts = [p.strip().strip('"') for p in line.split(',', 2)]
             if len(parts) >= 2:
                 key = parts[0]
-                human_readable_name = parts[1] if parts[1] else key  # Fallback to key if name is blank
-                field_mapping[key] = human_readable_name
 
-                # Handle help text
-                help = parts[2] if len(parts) == 3 and parts[2] else None
-                help_text[key] = help
+                # If key is 'title', map directly to the section
+                if key == 'title':
+                    full_key = current_section
+                else:
+                    full_key = f"{current_section}.{key}" if current_section else key
+
+                # Use the provided human-readable name or fallback to key
+                human_readable_name = parts[1] if parts[1] else key
+                field_mapping[full_key] = human_readable_name
+
+                # Handle help text or default
+                help = parts[2] if len(parts) == 3 and parts[2] else "No help available."
+                help_text[full_key] = help
 
             else:
-                # If only key is present with no readable/help text
-                field_mapping[key] = key
-                help_text[key] = ""
+                # Handle cases with only the key present
+                full_key = f"{current_section}.{key}" if current_section else key
+                field_mapping[full_key] = key
+                help_text[full_key] = "No help available."
 
     return field_mapping, help_text
 
@@ -94,16 +129,13 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
         field_info = current_menu[option]
         current_value = field_info[1] if isinstance(field_info, tuple) else ""
        
-       
-        # FOR STANDALONE CONFIGURE
-        # display_option = f"{option}"[:width // 2 - 2]  # Truncate option name if too long``
-        display_name = field_mapping.get(option, option)
+        # Apply replacements and normalize entries
+        transformed_path = transform_menu_path(menu_path)
+        full_key = '.'.join(transformed_path + [option])
+        display_name = field_mapping.get(full_key, option)
+
         display_option = f"{display_name}"[:width // 2 - 2]
-
-
-
-
-        display_value = f"{current_value}"[:width // 2 - 4]  # Truncate value if too long
+        display_value = f"{current_value}"[:width // 2 - 4]
 
         try:
             # Use red color for "Reboot" or "Shutdown"
@@ -117,10 +149,6 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
         save_position = height - 2
         menu_win.addstr(save_position, (width - len(save_option)) // 2, save_option, get_color("settings_save", reverse = (selected_index == len(current_menu))))
 
-
-
-
-    # FOR STANDALONE CONFIGURE
     # Create the help window
     # Erase the previous help window if it exists
     if 'help_win' in globals():
@@ -135,7 +163,12 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
 
     # Display initial help text
     selected_option = list(current_menu.keys())[selected_index] if current_menu else None
-    help_content = help_text.get(selected_option) or "No help available."
+
+    # Build the full key using the same logic as for field_mapping
+    full_help_key = '.'.join(transformed_path + [selected_option]) if selected_option else None
+
+    # Fetch the help text
+    help_content = help_text.get(full_help_key, "No help available.")
     wrapped_help = textwrap.wrap(help_content, width=width - 6)  # Wrap help text
 
     # Limit to 4 lines of help text and display
@@ -149,16 +182,11 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
     menu_pad.refresh(0, 0,
                      menu_win.getbegyx()[0] + 3, menu_win.getbegyx()[1] + 4,
                      menu_win.getbegyx()[0] + 3 + menu_win.getmaxyx()[0] - 5 - (2 if show_save_option else 0), menu_win.getbegyx()[1] + menu_win.getmaxyx()[1] - 8)
-    
-
-
-
-
 
     return menu_win, menu_pad
 
 
-def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_pad, help_win, help_text):
+def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path):
 
     if(old_idx == new_idx): # no-op
         return
@@ -183,11 +211,18 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
                      menu_win.getbegyx()[0] + 3 + menu_win.getmaxyx()[0] - 5 - (2 if show_save_option else 0), menu_win.getbegyx()[1] + menu_win.getmaxyx()[1] - 8)
 
 
-    # Update help window
+    transformed_path = transform_menu_path(menu_path)
+
+    # Update help window using the fully qualified key
     help_win.erase()
     help_win.border()
     selected_option = options[new_idx] if new_idx < len(options) else None
-    help_content = help_text.get(selected_option) or "No help available."
+
+    # Build the full key similar to display_menu
+    full_help_key = '.'.join(transformed_path + [selected_option]) if selected_option else None
+
+    # Fetch the help text
+    help_content = help_text.get(full_help_key, "No help available.")
 
     # Wrap the help text
     wrapped_help = textwrap.wrap(help_content, width=width - 6)
@@ -236,12 +271,12 @@ def settings_menu(stdscr, interface):
         if key == curses.KEY_UP:
             old_selected_index = selected_index
             selected_index = max_index if selected_index == 0 else selected_index - 1
-            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad, help_win, help_text)
+            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path)
             
         elif key == curses.KEY_DOWN:
             old_selected_index = selected_index
             selected_index = 0 if selected_index == max_index else selected_index + 1
-            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad, help_win, help_text)
+            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path)
 
         elif key == curses.KEY_RESIZE:
             need_redraw = True
@@ -250,7 +285,7 @@ def settings_menu(stdscr, interface):
         elif key == ord("\t") and show_save_option:
             old_selected_index = selected_index
             selected_index = max_index
-            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad, help_win, help_text)
+            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path)
 
         elif key == curses.KEY_RIGHT or key == ord('\n'):
             need_redraw = True
