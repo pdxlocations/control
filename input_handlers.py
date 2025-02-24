@@ -17,7 +17,7 @@ def get_text_input(prompt):
 
     # Display the prompt
     input_win.addstr(1, 2, prompt, get_color("settings_default", bold=True))
-    input_win.addstr(3, 2, "Enter value: ", get_color("settings_default"))
+    input_win.addstr(3, 2, "Enter mew value: ", get_color("settings_default"))
     input_win.refresh()
 
     # Check if "shortName" is in the prompt, and set max length accordingly
@@ -26,7 +26,7 @@ def get_text_input(prompt):
     curses.curs_set(1)
 
     user_input = ""
-    input_position = (3, 15)  # Tuple for row and column
+    input_position = (3, 19)
     row, col = input_position  # Unpack tuple
     while True:
         key = input_win.get_wch(row, col + len(user_input))  # Adjust cursor position dynamically

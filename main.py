@@ -398,14 +398,21 @@ def settings_menu(stdscr, interface):
             if isinstance(field_info, tuple):
                 field, current_value = field_info
 
+                # Transform the menu path to get the full key
+                transformed_path = transform_menu_path(menu_path)
+                full_key = '.'.join(transformed_path + [selected_option])
+
+                # Fetch human-readable name from field_mapping
+                human_readable_name = field_mapping.get(full_key, selected_option)
+
                 if selected_option in ['longName', 'shortName', 'isLicensed']:
                     if selected_option in ['longName', 'shortName']:
-                        new_value = get_text_input(f"Current value for {selected_option}: {current_value}")
+                        new_value = get_text_input(f"{human_readable_name} is currently: {current_value}")
                         new_value = current_value if new_value is None else new_value
                         current_menu[selected_option] = (field, new_value)
 
                     elif selected_option == 'isLicensed':
-                        new_value = get_list_input(f"Current value for {selected_option}: {current_value}", str(current_value),  ["True", "False"])
+                        new_value = get_list_input(f"{human_readable_name} is currently: {current_value}", str(current_value),  ["True", "False"])
                         new_value = new_value == "True"
                         current_menu[selected_option] = (field, new_value)
 
@@ -413,7 +420,7 @@ def settings_menu(stdscr, interface):
                         modified_settings[option] = value
 
                 elif selected_option in ['latitude', 'longitude', 'altitude']:
-                    new_value = get_text_input(f"Current value for {selected_option}: {current_value}")
+                    new_value = get_text_input(f"{human_readable_name} is currently: {current_value}")
                     new_value = current_value if new_value is None else new_value
                     current_menu[selected_option] = (field, new_value)
 
@@ -422,7 +429,7 @@ def settings_menu(stdscr, interface):
                             modified_settings[option] = current_menu[option][1]
 
                 elif field.type == 8:  # Handle boolean type
-                    new_value = get_list_input(selected_option, str(current_value),  ["True", "False"])
+                    new_value = get_list_input(human_readable_name, str(current_value),  ["True", "False"])
                     new_value = new_value == "True" or new_value is True
 
                 elif field.label == field.LABEL_REPEATED:  # Handle repeated field
@@ -431,22 +438,22 @@ def settings_menu(stdscr, interface):
 
                 elif field.enum_type:  # Enum field
                     enum_options = {v.name: v.number for v in field.enum_type.values}
-                    new_value_name = get_list_input(selected_option, current_value, list(enum_options.keys()))
+                    new_value_name = get_list_input(human_readable_name, current_value, list(enum_options.keys()))
                     new_value = enum_options.get(new_value_name, current_value)
 
                 elif field.type == 7: # Field type 7 corresponds to FIXED32
                     new_value = get_fixed32_input(current_value)
 
                 elif field.type == 13: # Field type 13 corresponds to UINT32
-                    new_value = get_text_input(f"Current value for {selected_option}: {current_value}")
+                    new_value = get_text_input(f"{human_readable_name} is currently: {current_value}")
                     new_value = current_value if new_value is None else int(new_value)
 
                 elif field.type == 2: # Field type 13 corresponds to INT64
-                    new_value = get_text_input(f"Current value for {selected_option}: {current_value}")
+                    new_value = get_text_input(f"{human_readable_name} is currently: {current_value}")
                     new_value = current_value if new_value is None else float(new_value)
 
                 else:  # Handle other field types
-                    new_value = get_text_input(f"Current value for {selected_option}: {current_value}")
+                    new_value = get_text_input(f"{human_readable_name} is currently: {current_value}")
                     new_value = current_value if new_value is None else new_value
                 
                 for key in menu_path[3:]:  # Skip "Main Menu"
