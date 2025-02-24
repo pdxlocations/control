@@ -45,7 +45,7 @@ def get_text_input(prompt):
                 user_input += key
             else:
                 user_input += chr(key)
-            input_win.addstr(3, 15, user_input, get_color("settings_default"))
+            input_win.addstr(3, 19, user_input, get_color("settings_default"))
 
     curses.curs_set(0)
 

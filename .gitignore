@@ -4,3 +4,5 @@ node_configs/*
 !node_configs/.gitkeep
 settings.log
 config.json
+.venv/
+venv/
