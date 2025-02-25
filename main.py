@@ -336,7 +336,7 @@ def settings_menu(stdscr, interface):
                     with open(yaml_file_path, "w", encoding="utf-8") as file:
                         file.write(config_text)
                     logging.info(f"Config file saved to {yaml_file_path}")
-                    break
+                    continue
                 except PermissionError:
                     logging.error(f"Permission denied: Unable to write to {yaml_file_path}")
                 except OSError as e:
@@ -355,7 +355,7 @@ def settings_menu(stdscr, interface):
                     file_path = os.path.join(app_directory, config_folder, filename)
                     overwrite = get_list_input(f"Are you sure you want to load {filename}?", None,  ["Yes", "No"])
                     if overwrite == "Yes":
-                        config_import(globals.interface, file_path)
+                        config_import(interface, file_path)
                     break
                 continue
 
