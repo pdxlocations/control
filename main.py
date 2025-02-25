@@ -290,7 +290,9 @@ def settings_menu(stdscr, interface):
         elif key == curses.KEY_RIGHT or key == ord('\n'):
             need_redraw = True
             menu_win.erase()
+            help_win.erase()
             menu_win.refresh()
+            help_win.refresh()
             if show_save_option and selected_index == len(options):
                 save_changes(interface, menu_path, modified_settings)
                 modified_settings.clear()
