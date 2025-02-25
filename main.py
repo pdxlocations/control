@@ -356,7 +356,6 @@ def settings_menu(stdscr, interface):
                     overwrite = get_list_input(f"Are you sure you want to load {filename}?", None,  ["Yes", "No"])
                     if overwrite == "Yes":
                         config_import(interface, file_path)
-                    break
                 continue
 
             elif selected_option == "Reboot":
@@ -364,28 +363,24 @@ def settings_menu(stdscr, interface):
                 if confirmation == "Yes":
                     interface.localNode.reboot()
                     logging.info(f"Node Reboot Requested by menu")
-                    break
                 continue
             elif selected_option == "Reset Node DB":
                 confirmation = get_list_input("Are you sure you want to Reset Node DB?", None,  ["Yes", "No"])
                 if confirmation == "Yes":
                     interface.localNode.resetNodeDb()
                     logging.info(f"Node DB Reset Requested by menu")
-                    break
                 continue
             elif selected_option == "Shutdown":
                 confirmation = get_list_input("Are you sure you want to Shutdown?", None, ["Yes", "No"])
                 if confirmation == "Yes":
                     interface.localNode.shutdown()
                     logging.info(f"Node Shutdown Requested by menu")
-                    break
                 continue
             elif selected_option == "Factory Reset":
                 confirmation = get_list_input("Are you sure you want to Factory Reset?", None,  ["Yes", "No"])
                 if confirmation == "Yes":
                     interface.localNode.factoryReset()
                     logging.info(f"Factory Reset Requested by menu")
-                    break
                 continue
             # elif selected_option == "App Settings":
             #     menu_win.clear()
