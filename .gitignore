@@ -2,7 +2,7 @@
 __pycache__/
 node-configs/*
 !node-configs/.gitkeep
-settings.log
 config.json
 .venv/
 venv/
+client.log
