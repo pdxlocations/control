@@ -104,15 +104,11 @@ field_mapping, help_text = parse_ini_file(translation_file)
 
 
 def display_menu(current_menu, menu_path, selected_index, show_save_option, help_text):
-    
-
-    # Calculate the dynamic height based on the number of menu items
-    num_items = len(current_menu) + (1 if show_save_option else 0)  # Add 1 for the "Save Changes" option if applicable
-    height = min(curses.LINES - 2 - 6, num_items + 5)  # Ensure the menu fits within the terminal height
-    start_y = ((curses.LINES - height) // 2) - 4 #to center with help window
+    num_items = len(current_menu) + (1 if show_save_option else 0)
+    height = min(curses.LINES - 2 - 6, num_items + 5)  
+    start_y = ((curses.LINES - height) // 2) - 4  
     start_x = (curses.COLS - width) // 2
 
-    # Create a new curses window with dynamic dimensions
     menu_win = curses.newwin(height, width, start_y, start_x)
     menu_win.erase()
     menu_win.bkgd(get_color("background"))
@@ -123,19 +119,16 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
     menu_pad = curses.newpad(len(current_menu) + 1, width - 8)
     menu_pad.bkgd(get_color("background"))
 
-    # Display the current menu path as a header
     header = " > ".join(word.title() for word in menu_path)
     if len(header) > width - 4:
         header = header[:width - 7] + "..."
     menu_win.addstr(1, 2, header, get_color("settings_breadcrumbs", bold=True))
 
-    # Display the menu options
+    transformed_path = transform_menu_path(menu_path)
+    
     for idx, option in enumerate(current_menu):
         field_info = current_menu[option]
         current_value = field_info[1] if isinstance(field_info, tuple) else ""
-       
-        # Apply replacements and normalize entries
-        transformed_path = transform_menu_path(menu_path)
         full_key = '.'.join(transformed_path + [option])
         display_name = field_mapping.get(full_key, option)
 
@@ -143,20 +136,17 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
         display_value = f"{current_value}"[:width // 2 - 4]
 
         try:
-            # Use red color for "Reboot" or "Shutdown"
-            color = get_color("settings_sensitive" if option in sensitive_settings else "settings_default", reverse = (idx == selected_index))
+            color = get_color("settings_sensitive" if option in sensitive_settings else "settings_default", reverse=(idx == selected_index))
             menu_pad.addstr(idx, 0, f"{display_option:<{width // 2 - 2}} {display_value}".ljust(width - 8), color)
         except curses.error:
             pass
 
-    # Show save option if applicable
     if show_save_option:
         save_position = height - 2
-        menu_win.addstr(save_position, (width - len(save_option)) // 2, save_option, get_color("settings_save", reverse = (selected_index == len(current_menu))))
+        menu_win.addstr(save_position, (width - len(save_option)) // 2, save_option, get_color("settings_save", reverse=(selected_index == len(current_menu))))
 
-    max_help_height = 4
-    draw_help_window(start_y, start_x,  height, max_help_height, current_menu, selected_index, transformed_path)
-
+    max_help_lines = 4
+    draw_help_window(start_y, start_x, height, max_help_lines, current_menu, selected_index, transformed_path)
 
     menu_win.refresh()
     menu_pad.refresh(0, 0,
@@ -167,49 +157,49 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
 
 
 
-def draw_help_window(menu_start_y, menu_start_x, menu_height, max_help_height, current_menu, selected_index, transformed_path):
+def get_wrapped_help_text(help_text, transformed_path, selected_option, width, max_lines):
+    """Fetches and formats help text for display, ensuring it fits within the allowed lines."""
+    
+    full_help_key = '.'.join(transformed_path + [selected_option]) if selected_option else None
+    help_content = help_text.get(full_help_key, "No help available.")
+
+    wrap_width = max(width - 6, 10)  # Ensure a valid wrapping width
+    wrapped_help = textwrap.wrap(help_content, width=wrap_width)
+
+    if len(wrapped_help) > max_lines:
+        wrapped_help = wrapped_help[:max_lines]  # Trim to max lines
+        wrapped_help[-1] = wrapped_help[-1][: wrap_width - 3] + "..."  # Append ellipsis
+
+    return wrapped_help
+
+
+
+def draw_help_window(menu_start_y, menu_start_x, menu_height, max_help_lines, current_menu, selected_index, transformed_path):
     global help_win
 
-    # Clear previous help window if it exists
     if 'help_win' in globals():
         help_win.erase()
         help_win.refresh()
 
-    # Determine the selected option and build the full help key
     selected_option = list(current_menu.keys())[selected_index] if current_menu else None
-    full_help_key = '.'.join(transformed_path + [selected_option]) if selected_option else None
 
-    # Fetch the help text
-    help_content = help_text.get(full_help_key, "No help available.")
+    # Fetch and wrap the help text using the new helper function
+    max_lines = max_help_lines
+    wrapped_help = get_wrapped_help_text(help_text, transformed_path, selected_option, width, max_lines)
 
-    # Use the same wrapping logic as move_highlight:
-    wrap_width = max(width - 6, 10)  # Ensure a valid wrapping width
-    wrapped_help = textwrap.wrap(help_content, width=wrap_width)
-
-    # Dynamically compute the help window height
-    help_height = min(len(wrapped_help) + 2, max_help_height + 2)
+    help_height = min(len(wrapped_help) + 2, max_help_lines + 2)
     help_height = max(help_height, 3)  # Ensure at least 3 rows (1 text + border)
 
-    # Position the help window below the menu window
     help_y = menu_start_y + menu_height
     if help_y + help_height > curses.LINES:
         help_y = curses.LINES - help_height
 
-    # Create and style the help window
     help_win = curses.newwin(help_height, width, help_y, menu_start_x)
     help_win.bkgd(get_color("background"))
     help_win.attrset(get_color("window_frame"))
     help_win.border()
 
-    # Determine how many lines can be displayed
-    max_lines = help_height - 2  # Account for border
-
-    # If text overflows, modify the last visible line
-    if len(wrapped_help) > max_lines:
-        wrapped_help = wrapped_help[:max_lines]  # Trim to fit
-        wrapped_help[-1] = wrapped_help[-1][: wrap_width - 3] + "..."  # Append ellipsis at the last visible line
-
-    # Display wrapped text
+    # Display wrapped help text
     for idx, line in enumerate(wrapped_help):
         try:
             help_win.addstr(1 + idx, 2, line, get_color("settings_default"))
@@ -220,8 +210,7 @@ def draw_help_window(menu_start_y, menu_start_x, menu_height, max_help_height, c
 
 
 
-
-def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path, max_help_height):
+def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path, max_help_lines):
 
     if old_idx == new_idx:  # No-op
         return
@@ -251,17 +240,12 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
 
     # Update help window using the fully qualified key
     selected_option = options[new_idx] if new_idx < len(options) else None
-    full_help_key = '.'.join(transformed_path + [selected_option]) if selected_option else None
 
-    # Fetch the help text
-    help_content = help_text.get(full_help_key, "No help available.")
-
-    # Wrap the help text
-    wrap_width = max(width - 6, 10)  # Ensure a valid wrapping width
-    wrapped_help = textwrap.wrap(help_content, width=wrap_width)
+    max_lines = max_help_lines
+    wrapped_help = get_wrapped_help_text(help_text, transformed_path, selected_option, width, max_lines)
 
     # Dynamically set help window height
-    help_height = min(len(wrapped_help) + 2, max_help_height + 2)  # +2 for border
+    help_height = min(len(wrapped_help) + 2, max_help_lines + 2)  # +2 for border
     help_height = max(help_height, 3)  # Ensure at least 3 rows (1 text + border)
 
     # Position help window under the menu
@@ -279,14 +263,6 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
     help_win.bkgd(get_color("background"))
     help_win.attrset(get_color("window_frame"))
     help_win.border()
-
-    # Determine how many lines can be displayed
-    max_lines = help_height - 2  # Account for border
-
-    # If text overflows, modify the last visible line
-    if len(wrapped_help) > max_lines:
-        wrapped_help = wrapped_help[:max_lines]  # Trim to fit
-        wrapped_help[-1] = wrapped_help[-1][: wrap_width - 3] + "..."  # Append ellipsis at the last visible line
 
     # Display wrapped text
     for idx, line in enumerate(wrapped_help):
@@ -333,17 +309,17 @@ def settings_menu(stdscr, interface):
         key = menu_win.getch()
 
         max_index = len(options) + (1 if show_save_option else 0) - 1
-        max_help_height = 4
+        max_help_lines = 4
 
         if key == curses.KEY_UP:
             old_selected_index = selected_index
             selected_index = max_index if selected_index == 0 else selected_index - 1
-            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path,max_help_height)
+            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path,max_help_lines)
             
         elif key == curses.KEY_DOWN:
             old_selected_index = selected_index
             selected_index = 0 if selected_index == max_index else selected_index + 1
-            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path, max_help_height)
+            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path, max_help_lines)
 
         elif key == curses.KEY_RESIZE:
             need_redraw = True
@@ -352,15 +328,14 @@ def settings_menu(stdscr, interface):
         elif key == ord("\t") and show_save_option:
             old_selected_index = selected_index
             selected_index = max_index
-            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path, max_help_height)
+            move_highlight(old_selected_index, selected_index, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path, max_help_lines)
 
         elif key == curses.KEY_RIGHT or key == ord('\n'):
             need_redraw = True
             menu_win.erase()
             help_win.erase()
 
-            max_help_height = 4
-            draw_help_window(menu_win.getbegyx()[0], menu_win.getbegyx()[1], menu_win.getmaxyx()[0], max_help_height, current_menu, selected_index, transform_menu_path(menu_path))
+            # draw_help_window(menu_win.getbegyx()[0], menu_win.getbegyx()[1], menu_win.getmaxyx()[0], max_help_lines, current_menu, selected_index, transform_menu_path(menu_path))
 
             menu_win.refresh()
             help_win.refresh()
@@ -548,8 +523,8 @@ def settings_menu(stdscr, interface):
             menu_win.erase()
             help_win.erase()
 
-            max_help_height = 4
-            draw_help_window(menu_win.getbegyx()[0], menu_win.getbegyx()[1], menu_win.getmaxyx()[0], max_help_height, current_menu, selected_index, transform_menu_path(menu_path))
+            # max_help_lines = 4
+            # draw_help_window(menu_win.getbegyx()[0], menu_win.getbegyx()[1], menu_win.getmaxyx()[0], max_help_lines, current_menu, selected_index, transform_menu_path(menu_path))
 
             menu_win.refresh()
             help_win.refresh()
