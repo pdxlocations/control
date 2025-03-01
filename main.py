@@ -20,7 +20,7 @@ from user_config import json_editor
 
 
 width = 80
-max_help_lines = 4
+max_help_lines = 0
 save_option = "Save Changes"
 sensitive_settings = ["Reboot", "Reset Node DB", "Shutdown", "Factory Reset"]
 help_win = None  # Ensures it's defined globally before usage
