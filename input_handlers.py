@@ -6,7 +6,7 @@ def get_text_input(prompt):
     # Calculate the dynamic height and width for the input window
     height = 7  # Fixed height for input prompt
     width = 80
-    start_y = (curses.LINES - height) // 2
+    start_y = (curses.LINES - height) // 2 - 2
     start_x = (curses.COLS - width) // 2
 
     # Create a new window for user input
@@ -17,7 +17,7 @@ def get_text_input(prompt):
 
     # Display the prompt
     input_win.addstr(1, 2, prompt, get_color("settings_default", bold=True))
-    input_win.addstr(3, 2, "Enter value: ", get_color("settings_default"))
+    input_win.addstr(3, 2, "Enter mew value: ", get_color("settings_default"))
     input_win.refresh()
 
     # Check if "shortName" is in the prompt, and set max length accordingly
@@ -26,11 +26,13 @@ def get_text_input(prompt):
     curses.curs_set(1)
 
     user_input = ""
-    input_position = (3, 15)  # Tuple for row and column
+    input_position = (3, 19)
     row, col = input_position  # Unpack tuple
     while True:
         key = input_win.get_wch(row, col + len(user_input))  # Adjust cursor position dynamically
         if key == chr(27) or key == curses.KEY_LEFT:  # ESC or Left Arrow
+            input_win.erase()
+            input_win.refresh()
             curses.curs_set(0)
             return None  # Exit without returning a value
         elif key in (chr(curses.KEY_ENTER), chr(10), chr(13)):
@@ -45,7 +47,7 @@ def get_text_input(prompt):
                 user_input += key
             else:
                 user_input += chr(key)
-            input_win.addstr(3, 15, user_input, get_color("settings_default"))
+            input_win.addstr(3, 19, user_input, get_color("settings_default"))
 
     curses.curs_set(0)
 
@@ -59,7 +61,7 @@ def get_repeated_input(current_value):
     cvalue = current_value
     height = 10
     width = 80
-    start_y = (curses.LINES - height) // 2
+    start_y = (curses.LINES - height) // 2 - 2
     start_x = (curses.COLS - width) // 2
 
     repeated_win = curses.newwin(height, width, start_y, start_x)
@@ -82,6 +84,8 @@ def get_repeated_input(current_value):
         key = repeated_win.getch()
 
         if key == 27 or key == curses.KEY_LEFT:  # Escape or Left Arrow
+            repeated_win.erase()
+            repeated_win.refresh()
             curses.noecho()
             curses.curs_set(0)
             return cvalue  # Return the current value without changes
@@ -103,7 +107,7 @@ def get_fixed32_input(current_value):
     current_value = str(ipaddress.IPv4Address(current_value))
     height = 10
     width = 80
-    start_y = (curses.LINES - height) // 2
+    start_y = (curses.LINES - height) // 2 - 2
     start_x = (curses.COLS - width) // 2
 
     fixed32_win = curses.newwin(height, width, start_y, start_x)
@@ -126,6 +130,8 @@ def get_fixed32_input(current_value):
         key = fixed32_win.getch()
 
         if key == 27 or key == curses.KEY_LEFT:  # Escape or Left Arrow to cancel
+            fixed32_win.erase()
+            fixed32_win.refresh()
             curses.noecho()
             curses.curs_set(0)
             return cvalue  # Return the current value unchanged
@@ -161,7 +167,7 @@ def get_list_input(prompt, current_option, list_options):
 
     height = min(len(list_options) + 5, curses.LINES - 2)
     width = 80
-    start_y = (curses.LINES - height) // 2
+    start_y = (curses.LINES - height) // 2 - 2
     start_x = (curses.COLS - width) // 2
 
     list_win = curses.newwin(height, width, start_y, start_x)

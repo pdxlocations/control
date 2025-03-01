@@ -1,6 +1,8 @@
 .DS_Store
 __pycache__/
-node_configs/*
-!node_configs/.gitkeep
-settings.log
+node-configs/*
+!node-configs/.gitkeep
 config.json
+.venv/
+venv/
+client.log
