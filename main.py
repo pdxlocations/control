@@ -203,9 +203,9 @@ def update_help_window(help_win, help_text, transformed_path, selected_option, m
 
     for idx, line_segments in enumerate(wrapped_help):
         x_pos = 2  # Start after border
-        for text, color, bold in line_segments:
+        for text, color, bold, underline in line_segments:
             try:
-                attr = get_color(color, bold=bold)
+                attr = get_color(color, bold=bold, underline=underline)
                 help_win.addstr(1 + idx, x_pos, text, attr)
                 x_pos += len(text)
             except curses.error:
@@ -213,6 +213,7 @@ def update_help_window(help_win, help_text, transformed_path, selected_option, m
 
     help_win.refresh()
     return help_win
+
 
 
 def get_wrapped_help_text(help_text, transformed_path, selected_option, width, max_lines):
@@ -225,9 +226,14 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
 
     # Color replacements
     color_mappings = {
-        r'\[note\](.*?)\[/note\]': ('settings_note', True),  # Green for notes
-        r'\[warning\](.*?)\[/warning\]': ('settings_warning', True),  # Yellow for warnings
-        r'\[error\](.*?)\[/error\]': ('settings_error', True),  # Red for errors
+        r'\[warning\](.*?)\[/warning\]': ('settings_warning', True, False),  # Red for warnings
+        r'\[note\](.*?)\[/note\]': ('settings_note', True, False),  # Green for notes
+        r'\[underline\](.*?)\[/underline\]': ('settings_default', False, True),  # Underline
+
+        r'\\033\[31m(.*?)\\033\[0m': ('settings_warning', True, False),  # Red text
+        r'\\033\[32m(.*?)\\033\[0m': ('settings_note', True, False),  # Green text
+        r'\\033\[4m(.*?)\\033\[0m': ('settings_default', False, True)  # Underline
+
     }
 
     wrapped_help = []
@@ -235,34 +241,34 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
     # Process each wrapped line separately
     for line in textwrap.wrap(help_content, width=wrap_width):
         matches = []
-        for pattern, (color, bold) in color_mappings.items():
+        for pattern, (color, bold, underline) in color_mappings.items():
             for match in re.finditer(pattern, line):
-                matches.append((match.start(), match.end(), match.group(1), color, bold))
+                matches.append((match.start(), match.end(), match.group(1), color, bold, underline))
 
         # Sort matches by position to correctly apply colors
         matches.sort(key=lambda x: x[0])
 
         formatted_line = []
         last_pos = 0
-        for start, end, text, color, bold in matches:
+        for start, end, text, color, bold, underline in matches:
             if last_pos < start:
-                formatted_line.append((line[last_pos:start], "settings_default", False))  # Regular text
-            formatted_line.append((text, color, bold))  # Colored text
+                formatted_line.append((line[last_pos:start], "settings_default", False, False))  # Regular text
+            formatted_line.append((text, color, bold, underline))  # Colored text
             last_pos = end
 
         if last_pos < len(line):
-            formatted_line.append((line[last_pos:], "settings_default", False))  # Remaining text
+            formatted_line.append((line[last_pos:], "settings_default", False, False))  # Remaining text
         
         # Ensure every line is a list of tuples
         if not formatted_line:
-            formatted_line.append((line, "settings_default", False))  
+            formatted_line.append((line, "settings_default", False, False))  
 
         wrapped_help.append(formatted_line)
 
     # Trim and add ellipsis if needed
     if len(wrapped_help) > max_lines:
         wrapped_help = wrapped_help[:max_lines]  
-        wrapped_help[-1].append(("...", "settings_default", False))  
+        wrapped_help[-1].append(("...", "settings_default", False, False))  
 
     return wrapped_help
 
