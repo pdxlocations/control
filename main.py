@@ -177,17 +177,18 @@ def draw_help_window(menu_start_y, menu_start_x, menu_height, max_help_lines, cu
 
     help_win = update_help_window(help_win, help_text, transformed_path, selected_option, max_help_lines, width, help_y, menu_start_x)
 
-
 def update_help_window(help_win, help_text, transformed_path, selected_option, max_help_lines, width, help_y, help_x):
-    """Handles rendering the help window with proper inline colors."""
-    
+    """Handles rendering the help window consistently."""
     wrapped_help = get_wrapped_help_text(help_text, transformed_path, selected_option, width, max_help_lines)
-    help_height = min(len(wrapped_help) + 2, max_help_lines + 2)
-    help_height = max(help_height, 3)  # Ensure minimum size
 
+    help_height = min(len(wrapped_help) + 2, max_help_lines + 2)  # +2 for border
+    help_height = max(help_height, 3)  # Ensure at least 3 rows (1 text + border)
+
+    # Ensure help window does not exceed screen size
     if help_y + help_height > curses.LINES:
         help_y = curses.LINES - help_height
 
+    # Create or update the help window
     if help_win is None:
         help_win = curses.newwin(help_height, width, help_y, help_x)
     else:
@@ -200,91 +201,70 @@ def update_help_window(help_win, help_text, transformed_path, selected_option, m
     help_win.attrset(get_color("window_frame"))
     help_win.border()
 
-    for idx, line in enumerate(wrapped_help):
-        x_pos = 2  # Start position
-        for word, color in line:
+    for idx, line_segments in enumerate(wrapped_help):
+        x_pos = 2  # Start after border
+        for text, color, bold in line_segments:
             try:
-                if color:
-                    help_win.addstr(idx + 1, x_pos, word, get_color(color))
-                else:
-                    help_win.addstr(idx + 1, x_pos, word, get_color("settings_default"))
-                
-                x_pos += len(word) + 1  # Move cursor forward
+                attr = get_color(color, bold=bold)
+                help_win.addstr(1 + idx, x_pos, text, attr)
+                x_pos += len(text)
             except curses.error:
-                pass  # Prevent crashes if text exceeds bounds
+                pass  # Prevent crashes
 
     help_win.refresh()
     return help_win
 
 
-
 def get_wrapped_help_text(help_text, transformed_path, selected_option, width, max_lines):
-    """Fetches and formats help text for display while keeping inline colors and proper wrapping."""
-
+    """Fetches and formats help text for display, ensuring it fits within the allowed lines."""
+    
     full_help_key = '.'.join(transformed_path + [selected_option]) if selected_option else None
     help_content = help_text.get(full_help_key, "No help available.")
 
-    # Define regex patterns for inline tags
-    tag_patterns = {
-        "note": re.compile(r'\[note\](.*?)\[/note\]'),
-        "warning": re.compile(r'\[warning\](.*?)\[/warning\]'),
-        "bold": re.compile(r'\[bold\](.*?)\[/bold\]'),
+    wrap_width = max(width - 6, 10)  # Ensure a valid wrapping width
+
+    # Color replacements
+    color_mappings = {
+        r'\[note\](.*?)\[/note\]': ('settings_note', True),  # Green for notes
+        r'\[warning\](.*?)\[/warning\]': ('settings_warning', True),  # Yellow for warnings
+        r'\[error\](.*?)\[/error\]': ('settings_error', True),  # Red for errors
     }
 
-    formatted_parts = []
-    last_pos = 0
+    wrapped_help = []
+    
+    # Process each wrapped line separately
+    for line in textwrap.wrap(help_content, width=wrap_width):
+        matches = []
+        for pattern, (color, bold) in color_mappings.items():
+            for match in re.finditer(pattern, line):
+                matches.append((match.start(), match.end(), match.group(1), color, bold))
 
-    # Process all tagged text
-    matches = []
-    for tag, pattern in tag_patterns.items():
-        matches.extend([(m.start(), m.end(), tag, m.group(1)) for m in pattern.finditer(help_content)])
+        # Sort matches by position to correctly apply colors
+        matches.sort(key=lambda x: x[0])
 
-    matches.sort(key=lambda x: x[0])  # Ensure matches are processed in order
+        formatted_line = []
+        last_pos = 0
+        for start, end, text, color, bold in matches:
+            if last_pos < start:
+                formatted_line.append((line[last_pos:start], "settings_default", False))  # Regular text
+            formatted_line.append((text, color, bold))  # Colored text
+            last_pos = end
 
-    for start, end, tag, text in matches:
-        # Append normal text before the match
-        if last_pos < start:
-            formatted_parts.append((help_content[last_pos:start], None))
+        if last_pos < len(line):
+            formatted_line.append((line[last_pos:], "settings_default", False))  # Remaining text
+        
+        # Ensure every line is a list of tuples
+        if not formatted_line:
+            formatted_line.append((line, "settings_default", False))  
 
-        # Apply tag-specific color
-        if tag == "note":
-            formatted_parts.append((text, "settings_note"))
-        elif tag == "warning":
-            formatted_parts.append((text, "settings_warning"))
-        elif tag == "bold":
-            formatted_parts.append((text, "bold_text"))
+        wrapped_help.append(formatted_line)
 
-        last_pos = end
+    # Trim and add ellipsis if needed
+    if len(wrapped_help) > max_lines:
+        wrapped_help = wrapped_help[:max_lines]  
+        wrapped_help[-1].append(("...", "settings_default", False))  
 
-    # Append remaining normal text
-    if last_pos < len(help_content):
-        formatted_parts.append((help_content[last_pos:], None))
-
-    # Convert formatted text into wrapped lines
-    wrapped_lines = []
-    current_line = []
-    current_length = 0
-
-    for text, color in formatted_parts:
-        words = text.split()
-        for word in words:
-            if current_length + len(word) + 1 > width - 6:  # Wrap when necessary
-                wrapped_lines.append(current_line)
-                current_line = []
-                current_length = 0
-
-            current_line.append((word, color))
-            current_length += len(word) + 1  # Account for spaces
-
-    if current_line:
-        wrapped_lines.append(current_line)
-
-    # Trim to max lines and add "..." if needed
-    if len(wrapped_lines) > max_lines:
-        wrapped_lines = wrapped_lines[:max_lines]
-        wrapped_lines[-1].append(("...", None))  # Add ellipsis if cut off
-
-    return wrapped_lines
+    return wrapped_help
 
 
 def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path, max_help_lines):
