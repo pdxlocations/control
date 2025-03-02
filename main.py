@@ -177,12 +177,10 @@ def draw_help_window(menu_start_y, menu_start_x, menu_height, max_help_lines, cu
 
     help_win = update_help_window(help_win, help_text, transformed_path, selected_option, max_help_lines, width, help_y, menu_start_x)
 
-
 def update_help_window(help_win, help_text, transformed_path, selected_option, max_help_lines, width, help_y, help_x):
     """Handles rendering the help window consistently."""
     wrapped_help = get_wrapped_help_text(help_text, transformed_path, selected_option, width, max_help_lines)
 
-    # Dynamically set help window height
     help_height = min(len(wrapped_help) + 2, max_help_lines + 2)  # +2 for border
     help_height = max(help_height, 3)  # Ensure at least 3 rows (1 text + border)
 
@@ -203,14 +201,20 @@ def update_help_window(help_win, help_text, transformed_path, selected_option, m
     help_win.attrset(get_color("window_frame"))
     help_win.border()
 
-    for idx, line in enumerate(wrapped_help):
-        try:
-            help_win.addstr(1 + idx, 2, line, get_color("settings_default"))
-        except curses.error:
-            pass  # Prevent crashes
+    for idx, line_segments in enumerate(wrapped_help):
+        x_pos = 2  # Start after border
+        for text, color, bold, underline in line_segments:
+            try:
+                attr = get_color(color, bold=bold, underline=underline)
+                help_win.addstr(1 + idx, x_pos, text, attr)
+                x_pos += len(text)
+            except curses.error:
+                pass  # Prevent crashes
 
     help_win.refresh()
     return help_win
+
+
 
 def get_wrapped_help_text(help_text, transformed_path, selected_option, width, max_lines):
     """Fetches and formats help text for display, ensuring it fits within the allowed lines."""
@@ -219,11 +223,82 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
     help_content = help_text.get(full_help_key, "No help available.")
 
     wrap_width = max(width - 6, 10)  # Ensure a valid wrapping width
-    wrapped_help = textwrap.wrap(help_content, width=wrap_width)
 
+    # Color replacements
+    color_mappings = {
+        r'\[warning\](.*?)\[/warning\]': ('settings_warning', True, False),  # Red for warnings
+        r'\[note\](.*?)\[/note\]': ('settings_note', True, False),  # Green for notes
+        r'\[underline\](.*?)\[/underline\]': ('settings_default', False, True),  # Underline
+
+        r'\\033\[31m(.*?)\\033\[0m': ('settings_warning', True, False),  # Red text
+        r'\\033\[32m(.*?)\\033\[0m': ('settings_note', True, False),  # Green text
+        r'\\033\[4m(.*?)\\033\[0m': ('settings_default', False, True)  # Underline
+    }
+
+    def extract_ansi_segments(text):
+        """Extracts and replaces ANSI color codes, returning segments with metadata."""
+        matches = []
+        active_colors = []  # Stack to track ongoing ANSI states
+
+        for pattern, (color, bold, underline) in color_mappings.items():
+            for match in re.finditer(pattern, text):
+                start, end, content = match.start(), match.end(), match.group(1)
+                matches.append((start, end, content, color, bold, underline))
+        
+        matches.sort(key=lambda x: x[0])
+
+        formatted_text = []
+        last_pos = 0
+
+        for start, end, content, color, bold, underline in matches:
+            if last_pos < start:
+                formatted_text.append((text[last_pos:start], "settings_default", False, False))  # Unstyled text
+            formatted_text.append((content, color, bold, underline))
+            last_pos = end
+
+        if last_pos < len(text):
+            formatted_text.append((text[last_pos:], "settings_default", False, False))  # Remaining text
+
+        return formatted_text
+
+    def wrap_ansi_text(segments, wrap_width):
+        """Wraps text while preserving ANSI formatting across lines."""
+        wrapped_lines = []
+        line_buffer = []
+        line_length = 0
+
+        for text, color, bold, underline in segments:
+            words = re.findall(r'\S+\s*', text)  # Keeps spaces attached to words
+
+            for word in words:
+                word_length = len(word.rstrip())  # Ignore trailing spaces for wrapping calculations
+
+                if line_length + word_length > wrap_width:  # Wrap condition
+                    wrapped_lines.append(line_buffer)
+                    line_buffer = []
+                    line_length = 0
+
+                line_buffer.append((word, color, bold, underline))
+                line_length += len(word)
+
+        if line_buffer:
+            wrapped_lines.append(line_buffer)
+
+        return wrapped_lines
+
+    # Extract color segments
+    raw_lines = help_content.split("\\n")  # Preserve manual new lines
+    wrapped_help = []
+
+    for raw_line in raw_lines:
+        color_segments = extract_ansi_segments(raw_line)
+        wrapped_segments = wrap_ansi_text(color_segments, wrap_width)
+        wrapped_help.extend(wrapped_segments)
+
+    # Trim and add ellipsis if needed
     if len(wrapped_help) > max_lines:
-        wrapped_help = wrapped_help[:max_lines]  # Trim to max lines
-        wrapped_help[-1] = wrapped_help[-1][: wrap_width - 3] + "..."  # Append ellipsis
+        wrapped_help = wrapped_help[:max_lines]  
+        wrapped_help[-1].append(("...", "settings_default", False, False))  
 
     return wrapped_help
 

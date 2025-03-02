@@ -57,7 +57,9 @@ def initialize_config():
         "settings_default": ["white", "black"],
         "settings_sensitive": ["red", "black"],
         "settings_save": ["green", "black"],
-        "settings_breadcrumbs": ["white", "black"]
+        "settings_breadcrumbs": ["white", "black"],
+        "settings_warning": ["red", "black"],
+        "settings_note": ["green", "black"]
     }
 
     COLOR_CONFIG_LIGHT = {
@@ -80,7 +82,9 @@ def initialize_config():
         "settings_default": ["black", "white"],
         "settings_sensitive": ["red", "white"],
         "settings_save": ["green", "white"],
-        "settings_breadcrumbs": ["black", "white"]
+        "settings_breadcrumbs": ["black", "white"],
+        "settings_warning": ["red", "white"],
+        "settings_note": ["green", "white"]
     }
     COLOR_CONFIG_GREEN = {
         "default": ["green", "black"],
@@ -102,7 +106,9 @@ def initialize_config():
         "settings_default": ["green", "black"],
         "settings_sensitive": ["green", "black"],
         "settings_save": ["green", "black"],
-        "settings_breadcrumbs": ["green", "black"]
+        "settings_breadcrumbs": ["green", "black"],
+        "settings_warning": ["green", "black"],
+        "settings_note": ["green", "black"]
     }
 
     default_config_variables = {
