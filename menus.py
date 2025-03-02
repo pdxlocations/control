@@ -7,9 +7,15 @@ import os
 locals_dir = os.path.dirname(os.path.abspath(__file__))
 translation_file = os.path.join(locals_dir, "localisations", "en.ini")
 
+def encode_if_bytes(value):
+    """Encode byte values to base64 string."""
+    if isinstance(value, bytes):
+        return base64.b64encode(value).decode('utf-8')
+    return value
+
 def extract_fields(message_instance, current_config=None):
     if isinstance(current_config, dict):  # Handle dictionaries
-        return {key: (None, current_config.get(key, "Not Set")) for key in current_config}
+        return {key: (None, encode_if_bytes(current_config.get(key, "Not Set"))) for key in current_config}
     
     if not hasattr(message_instance, "DESCRIPTOR"):
         return {}
@@ -38,21 +44,18 @@ def extract_fields(message_instance, current_config=None):
                 menu[field.name] = (field, current_value)  # Non-integer values
         else:  # Handle other field types
             current_value = getattr(current_config, field.name, "Not Set") if current_config else "Not Set"
-            menu[field.name] = (field, current_value)
+            menu[field.name] = (field, encode_if_bytes(current_value))
     return menu
 
 def generate_menu_from_protobuf(interface):
-# Function to generate the menu structure from protobuf messages
     menu_structure = {"Main Menu": {}}
 
     # Add User Settings
     current_node_info = interface.getMyNodeInfo() if interface else None
 
     if current_node_info:
-
         current_user_config = current_node_info.get("user", None)
         if current_user_config and isinstance(current_user_config, dict):
-
             menu_structure["Main Menu"]["User Settings"] = {
                 "longName": (None, current_user_config.get("longName", "Not Set")),
                 "shortName": (None, current_user_config.get("shortName", "Not Set")),
@@ -73,8 +76,6 @@ def generate_menu_from_protobuf(interface):
             current_channel = interface.localNode.getChannelByChannelIndex(i)
             if current_channel:
                 channel_config = extract_fields(channel, current_channel.settings)
-                # Convert 'psk' field to Base64
-                channel_config["psk"] = (channel_config["psk"][0], base64.b64encode(channel_config["psk"][1]).decode('utf-8'))
                 menu_structure["Main Menu"]["Channels"][f"Channel {i + 1}"] = channel_config
 
     # Add Radio Settings
@@ -89,10 +90,7 @@ def generate_menu_from_protobuf(interface):
         "altitude": (None, current_node_info["position"].get("altitude", 0))
     }
 
-    # Get existing position menu items
     existing_position_menu = menu_structure["Main Menu"]["Radio Settings"].get("position", {})
-
-    # Create an ordered position menu with Lat/Lon/Alt inserted in the middle
     ordered_position_menu = OrderedDict()
 
     for key, value in existing_position_menu.items():
@@ -102,28 +100,22 @@ def generate_menu_from_protobuf(interface):
         else:
             ordered_position_menu[key] = value
 
-    # Update the menu with the new order
     menu_structure["Main Menu"]["Radio Settings"]["position"] = ordered_position_menu
-
 
     # Add Module Settings
     module = module_config_pb2.ModuleConfig()
     current_module_config = interface.localNode.moduleConfig if interface else None
     menu_structure["Main Menu"]["Module Settings"] = extract_fields(module, current_module_config)
 
-    # Add App Settings
-    # menu_structure["Main Menu"]["App Settings"] = {"Open": "app_settings"}
+    # Additional settings options
+    menu_structure["Main Menu"].update({
+        "Export Config": None,
+        "Load Config": None,
+        "Reboot": None,
+        "Reset Node DB": None,
+        "Shutdown": None,
+        "Factory Reset": None,
+        "Exit": None
+    })
 
-    # Add additional settings options
-    menu_structure["Main Menu"]["Export Config"] = None
-    menu_structure["Main Menu"]["Load Config"] = None
-    menu_structure["Main Menu"]["Reboot"] = None
-    menu_structure["Main Menu"]["Reset Node DB"] = None
-    menu_structure["Main Menu"]["Shutdown"] = None
-    menu_structure["Main Menu"]["Factory Reset"] = None
-
-    # Add Exit option
-    menu_structure["Main Menu"]["Exit"] = None
-
-    # return menu_structure
     return menu_structure
