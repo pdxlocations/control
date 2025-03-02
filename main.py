@@ -266,24 +266,20 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
         wrapped_lines = []
         line_buffer = []
         line_length = 0
-        active_format = None  # Keep track of ongoing styles
 
         for text, color, bold, underline in segments:
-            words = text.split(' ')  # Preserve spaces
+            words = re.findall(r'\S+\s*', text)  # Keeps spaces attached to words
+
             for word in words:
-                if line_length + len(word) + (1 if line_buffer else 0) > wrap_width:  # Wrap condition
+                word_length = len(word.rstrip())  # Ignore trailing spaces for wrapping calculations
+
+                if line_length + word_length > wrap_width:  # Wrap condition
                     wrapped_lines.append(line_buffer)
                     line_buffer = []
                     line_length = 0
-                if line_buffer:
-                    line_buffer.append((" ", "settings_default", False, False))  # Preserve spacing
-                    line_length += 1
+
                 line_buffer.append((word, color, bold, underline))
                 line_length += len(word)
-
-            # If color spans across lines, maintain it
-            if color != "settings_default":
-                active_format = (color, bold, underline)
 
         if line_buffer:
             wrapped_lines.append(line_buffer)
