@@ -291,7 +291,7 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
         return wrapped_lines
 
     # Extract color segments
-    raw_lines = help_content.split("\n")  # Preserve manual new lines
+    raw_lines = help_content.split("\\n")  # Preserve manual new lines
     wrapped_help = []
 
     for raw_line in raw_lines:
