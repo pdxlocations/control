@@ -177,12 +177,10 @@ def draw_help_window(menu_start_y, menu_start_x, menu_height, max_help_lines, cu
 
     help_win = update_help_window(help_win, help_text, transformed_path, selected_option, max_help_lines, width, help_y, menu_start_x)
 
-
 def update_help_window(help_win, help_text, transformed_path, selected_option, max_help_lines, width, help_y, help_x):
     """Handles rendering the help window consistently."""
     wrapped_help = get_wrapped_help_text(help_text, transformed_path, selected_option, width, max_help_lines)
 
-    # Dynamically set help window height
     help_height = min(len(wrapped_help) + 2, max_help_lines + 2)  # +2 for border
     help_height = max(help_height, 3)  # Ensure at least 3 rows (1 text + border)
 
@@ -203,14 +201,20 @@ def update_help_window(help_win, help_text, transformed_path, selected_option, m
     help_win.attrset(get_color("window_frame"))
     help_win.border()
 
-    for idx, line in enumerate(wrapped_help):
-        try:
-            help_win.addstr(1 + idx, 2, line, get_color("settings_default"))
-        except curses.error:
-            pass  # Prevent crashes
+    for idx, line_segments in enumerate(wrapped_help):
+        x_pos = 2  # Start after border
+        for text, color, bold, underline in line_segments:
+            try:
+                attr = get_color(color, bold=bold, underline=underline)
+                help_win.addstr(1 + idx, x_pos, text, attr)
+                x_pos += len(text)
+            except curses.error:
+                pass  # Prevent crashes
 
     help_win.refresh()
     return help_win
+
+
 
 def get_wrapped_help_text(help_text, transformed_path, selected_option, width, max_lines):
     """Fetches and formats help text for display, ensuring it fits within the allowed lines."""
@@ -219,11 +223,54 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
     help_content = help_text.get(full_help_key, "No help available.")
 
     wrap_width = max(width - 6, 10)  # Ensure a valid wrapping width
-    wrapped_help = textwrap.wrap(help_content, width=wrap_width)
 
+    # Color replacements
+    color_mappings = {
+        r'\[warning\](.*?)\[/warning\]': ('settings_warning', True, False),  # Red for warnings
+        r'\[note\](.*?)\[/note\]': ('settings_note', True, False),  # Green for notes
+        r'\[underline\](.*?)\[/underline\]': ('settings_default', False, True),  # Underline
+
+        r'\\033\[31m(.*?)\\033\[0m': ('settings_warning', True, False),  # Red text
+        r'\\033\[32m(.*?)\\033\[0m': ('settings_note', True, False),  # Green text
+        r'\\033\[4m(.*?)\\033\[0m': ('settings_default', False, True)  # Underline
+    }
+
+    wrapped_help = []
+    
+    # **Handle line breaks before wrapping**
+    raw_lines = help_content.split("\\n")  # Preserve manual new lines
+
+    for raw_line in raw_lines:
+        wrapped_lines = textwrap.wrap(raw_line, width=wrap_width) if raw_line.strip() else [""]
+
+        for line in wrapped_lines:
+            matches = []
+            for pattern, (color, bold, underline) in color_mappings.items():
+                for match in re.finditer(pattern, line):
+                    matches.append((match.start(), match.end(), match.group(1), color, bold, underline))
+
+            matches.sort(key=lambda x: x[0])
+
+            formatted_line = []
+            last_pos = 0
+            for start, end, text, color, bold, underline in matches:
+                if last_pos < start:
+                    formatted_line.append((line[last_pos:start], "settings_default", False, False))  # Regular text
+                formatted_line.append((text, color, bold, underline))  # Colored text
+                last_pos = end
+
+            if last_pos < len(line):
+                formatted_line.append((line[last_pos:], "settings_default", False, False))  # Remaining text
+            
+            if not formatted_line:
+                formatted_line.append((line, "settings_default", False, False))  
+
+            wrapped_help.append(formatted_line)
+
+    # Trim and add ellipsis if needed
     if len(wrapped_help) > max_lines:
-        wrapped_help = wrapped_help[:max_lines]  # Trim to max lines
-        wrapped_help[-1] = wrapped_help[-1][: wrap_width - 3] + "..."  # Append ellipsis
+        wrapped_help = wrapped_help[:max_lines]  
+        wrapped_help[-1].append(("...", "settings_default", False, False))  
 
     return wrapped_help
 
