@@ -233,37 +233,39 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
         r'\\033\[31m(.*?)\\033\[0m': ('settings_warning', True, False),  # Red text
         r'\\033\[32m(.*?)\\033\[0m': ('settings_note', True, False),  # Green text
         r'\\033\[4m(.*?)\\033\[0m': ('settings_default', False, True)  # Underline
-
     }
 
     wrapped_help = []
     
-    # Process each wrapped line separately
-    for line in textwrap.wrap(help_content, width=wrap_width):
-        matches = []
-        for pattern, (color, bold, underline) in color_mappings.items():
-            for match in re.finditer(pattern, line):
-                matches.append((match.start(), match.end(), match.group(1), color, bold, underline))
+    # **Handle line breaks before wrapping**
+    raw_lines = help_content.split("\\n")  # Preserve manual new lines
 
-        # Sort matches by position to correctly apply colors
-        matches.sort(key=lambda x: x[0])
+    for raw_line in raw_lines:
+        wrapped_lines = textwrap.wrap(raw_line, width=wrap_width) if raw_line.strip() else [""]
 
-        formatted_line = []
-        last_pos = 0
-        for start, end, text, color, bold, underline in matches:
-            if last_pos < start:
-                formatted_line.append((line[last_pos:start], "settings_default", False, False))  # Regular text
-            formatted_line.append((text, color, bold, underline))  # Colored text
-            last_pos = end
+        for line in wrapped_lines:
+            matches = []
+            for pattern, (color, bold, underline) in color_mappings.items():
+                for match in re.finditer(pattern, line):
+                    matches.append((match.start(), match.end(), match.group(1), color, bold, underline))
 
-        if last_pos < len(line):
-            formatted_line.append((line[last_pos:], "settings_default", False, False))  # Remaining text
-        
-        # Ensure every line is a list of tuples
-        if not formatted_line:
-            formatted_line.append((line, "settings_default", False, False))  
+            matches.sort(key=lambda x: x[0])
 
-        wrapped_help.append(formatted_line)
+            formatted_line = []
+            last_pos = 0
+            for start, end, text, color, bold, underline in matches:
+                if last_pos < start:
+                    formatted_line.append((line[last_pos:start], "settings_default", False, False))  # Regular text
+                formatted_line.append((text, color, bold, underline))  # Colored text
+                last_pos = end
+
+            if last_pos < len(line):
+                formatted_line.append((line[last_pos:], "settings_default", False, False))  # Remaining text
+            
+            if not formatted_line:
+                formatted_line.append((line, "settings_default", False, False))  
+
+            wrapped_help.append(formatted_line)
 
     # Trim and add ellipsis if needed
     if len(wrapped_help) > max_lines:
