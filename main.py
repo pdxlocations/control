@@ -16,88 +16,18 @@ from menus import generate_menu_from_protobuf
 from ui.colors import setup_colors, get_color
 from utilities.arg_parser import setup_parser
 from utilities.interfaces import initialize_interface
+from utilities.settings_utils import parse_ini_file, transform_menu_path
 from user_config import json_editor
 
 
 width = 80
-max_help_lines = 0
 save_option = "Save Changes"
+max_help_lines = 0
+help_win = None
 sensitive_settings = ["Reboot", "Reset Node DB", "Shutdown", "Factory Reset"]
-help_win = None  # Ensures it's defined globally before usage
-
 locals_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
 translation_file = os.path.join(locals_dir, "localisations", "en.ini")
-
-
-def transform_menu_path(menu_path):
-    """Applies path replacements and normalizes entries in the menu path."""
-    path_replacements = {
-        "Radio Settings": "config",
-        "Module Settings": "module"
-    }
-
-    transformed_path = []
-    for part in menu_path[1:]:  # Skip 'Main Menu'
-        # Apply fixed replacements
-        part = path_replacements.get(part, part)
-
-        # Normalize entries like "Channel 1", "Channel 2", etc.
-        if re.match(r'Channel\s+\d+', part, re.IGNORECASE):
-            part = "channel"
-
-        transformed_path.append(part)
-
-    return transformed_path
-
-
-def parse_ini_file(ini_file_path):
-    field_mapping = {}
-    help_text = {}
-    current_section = None
-
-    with open(ini_file_path, 'r', encoding='utf-8') as f:
-        for line in f:
-            line = line.strip()
-
-            # Skip empty lines and comments
-            if not line or line.startswith(';') or line.startswith('#'):
-                continue
-
-            # Handle sections like [config.device]
-            if line.startswith('[') and line.endswith(']'):
-                current_section = line[1:-1]
-                continue
-
-            # Parse lines like: key, "Human-readable name", "helptext"
-            parts = [p.strip().strip('"') for p in line.split(',', 2)]
-            if len(parts) >= 2:
-                key = parts[0]
-
-                # If key is 'title', map directly to the section
-                if key == 'title':
-                    full_key = current_section
-                else:
-                    full_key = f"{current_section}.{key}" if current_section else key
-
-                # Use the provided human-readable name or fallback to key
-                human_readable_name = parts[1] if parts[1] else key
-                field_mapping[full_key] = human_readable_name
-
-                # Handle help text or default
-                help = parts[2] if len(parts) == 3 and parts[2] else "No help available."
-                help_text[full_key] = help
-
-            else:
-                # Handle cases with only the key present
-                full_key = f"{current_section}.{key}" if current_section else key
-                field_mapping[full_key] = key
-                help_text[full_key] = "No help available."
-
-    return field_mapping, help_text
-
-# Load human-readable field mappings
 field_mapping, help_text = parse_ini_file(translation_file)
-
 
 
 def display_menu(current_menu, menu_path, selected_index, show_save_option, help_text):
@@ -162,9 +92,6 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
     )
 
     return menu_win, menu_pad
-
-
-
 
 def draw_help_window(menu_start_y, menu_start_x, menu_height, max_help_lines, current_menu, selected_index, transformed_path):
     global help_win
@@ -301,6 +228,7 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
     return wrapped_help
 
 
+
 def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path, max_help_lines):
     # global help_win
 
@@ -334,6 +262,12 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
 
     # Call helper function to update the help window
     help_win = update_help_window(help_win, help_text, transformed_path, selected_option, max_help_lines, width, help_y, menu_win.getbegyx()[1])
+
+
+
+
+
+
 
 
 
