@@ -17,7 +17,7 @@ def get_text_input(prompt):
 
     # Display the prompt
     input_win.addstr(1, 2, prompt, get_color("settings_default", bold=True))
-    input_win.addstr(3, 2, "Enter mew value: ", get_color("settings_default"))
+    input_win.addstr(3, 2, "Enter new value: ", get_color("settings_default"))
     input_win.refresh()
 
     # Check if "shortName" is in the prompt, and set max length accordingly
