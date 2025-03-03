@@ -322,6 +322,12 @@ def settings_menu(stdscr, interface):
             need_redraw = True
             curses.update_lines_cols()
 
+            menu_win.erase()
+            help_win.erase()
+
+            menu_win.refresh()
+            help_win.refresh()
+            
         elif key == ord("\t") and show_save_option:
             old_selected_index = selected_index
             selected_index = max_index
