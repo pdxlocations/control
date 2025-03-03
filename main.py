@@ -31,12 +31,13 @@ field_mapping, help_text = parse_ini_file(translation_file)
 
 
 def display_menu(current_menu, menu_path, selected_index, show_save_option, help_text):
+    min_help_window_height = 6
     num_items = len(current_menu) + (1 if show_save_option else 0)
 
     # Determine the available height for the menu
-    max_menu_height = curses.LINES - 2  # Leave some space at the top and bottom
-    menu_height = min(max_menu_height - 6, num_items + 5)  
-    start_y = (curses.LINES - menu_height) // 2 - 2
+    max_menu_height = curses.LINES 
+    menu_height = min(max_menu_height - min_help_window_height, num_items + 5)  
+    start_y = (curses.LINES - menu_height) // 2 - (min_help_window_height // 2)
     start_x = (curses.COLS - width) // 2
 
     # Calculate remaining space for help window
