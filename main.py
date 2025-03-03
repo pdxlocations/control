@@ -235,32 +235,6 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
         r'\\033\[4m(.*?)\\033\[0m': ('settings_default', False, True)  # Underline
     }
 
-    # def extract_ansi_segments(text):
-    #     """Extracts and replaces ANSI color codes, returning segments with metadata."""
-    #     matches = []
-    #     active_colors = []  # Stack to track ongoing ANSI states
-
-    #     for pattern, (color, bold, underline) in color_mappings.items():
-    #         for match in re.finditer(pattern, text):
-    #             start, end, content = match.start(), match.end(), match.group(1)
-    #             matches.append((start, end, content, color, bold, underline))
-        
-    #     matches.sort(key=lambda x: x[0])
-
-    #     formatted_text = []
-    #     last_pos = 0
-
-    #     for start, end, content, color, bold, underline in matches:
-    #         if last_pos < start:
-    #             formatted_text.append((text[last_pos:start], "settings_default", False, False))  # Unstyled text
-    #         formatted_text.append((content, color, bold, underline))
-    #         last_pos = end
-
-    #     if last_pos < len(text):
-    #         formatted_text.append((text[last_pos:], "settings_default", False, False))  # Remaining text
-
-    #     return formatted_text
-
     def extract_ansi_segments(text):
         """Extracts and replaces ANSI color codes, ensuring spaces are preserved."""
         matches = []
@@ -283,32 +257,6 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
             matches.append((text[last_pos:], "settings_default", False, False))
 
         return matches
-
-    # def wrap_ansi_text(segments, wrap_width):
-    #     """Wraps text while preserving ANSI formatting across lines."""
-    #     wrapped_lines = []
-    #     line_buffer = []
-    #     line_length = 0
-
-    #     for text, color, bold, underline in segments:
-    #         words = re.findall(r'\S+\s*', text)  # Keeps spaces attached to words
-
-    #         for word in words:
-    #             word_length = len(word.rstrip())  # Ignore trailing spaces for wrapping calculations
-
-    #             if line_length + word_length > wrap_width:  # Wrap condition
-    #                 wrapped_lines.append(line_buffer)
-    #                 line_buffer = []
-    #                 line_length = 0
-
-    #             line_buffer.append((word, color, bold, underline))
-    #             line_length += len(word)
-
-    #     if line_buffer:
-    #         wrapped_lines.append(line_buffer)
-
-    #     return wrapped_lines
-
 
     def wrap_ansi_text(segments, wrap_width):
         """Wraps text while preserving ANSI formatting and spaces."""
