@@ -61,7 +61,6 @@ def get_text_input(prompt):
 
 
 
-
 def get_repeated_input(current_value):
     def to_base64(byte_strings):
         """Convert byte values to Base64-encoded strings."""
@@ -75,12 +74,8 @@ def get_repeated_input(current_value):
         except binascii.Error:
             return False
 
-    def to_bytes(base64_strings):
-        """Convert valid Base64 strings to byte values."""
-        return [base64.b64decode(s) for s in base64_strings if is_valid_base64(s)]
-
     cvalue = to_base64(current_value)  # Convert current values to Base64
-    height = 8
+    height = 9
     width = 80
     start_y = (curses.LINES - height) // 2 - 2
     start_x = (curses.COLS - width) // 2
@@ -91,7 +86,7 @@ def get_repeated_input(current_value):
     repeated_win.keypad(True)  # Enable keypad for special keys
 
     curses.echo()
-    curses.curs_set(1)
+    curses.curs_set(1)  # ✅ Show the cursor
 
     # Editable list of values (max 3 values)
     user_values = cvalue[:3]
@@ -106,11 +101,16 @@ def get_repeated_input(current_value):
         # Display current values, allowing editing
         for i, line in enumerate(user_values):
             prefix = "→ " if i == cursor_pos else "  "  # Highlight the current line
-            repeated_win.addstr(3 + i, 2, f"{prefix}Admin Key {i + 1}: {line}", get_color("settings_default", bold=(i == cursor_pos)))
+            repeated_win.addstr(3 + i, 2, f"{prefix}Admin Key {i + 1}: ", get_color("settings_default", bold=(i == cursor_pos)))
+            repeated_win.addstr(3 + i, 18, line)  # ✅ Align text for easier editing
+
+        # Move cursor to the correct position inside the field
+        curses.curs_set(1)  # ✅ Make sure the cursor is visible
+        repeated_win.move(3 + cursor_pos, 18 + len(user_values[cursor_pos]))  # ✅ Position cursor at end of text
 
         # Show error message if needed
         if error_message:
-            repeated_win.addstr(8, 2, error_message, get_color("error", bold=True))
+            repeated_win.addstr(7, 2, error_message, get_color("settings_default", bold=True))
 
         repeated_win.refresh()
         key = repeated_win.getch()
@@ -121,6 +121,7 @@ def get_repeated_input(current_value):
             curses.noecho()
             curses.curs_set(0)
             return ", ".join(cvalue)  # Return original Base64 strings
+        
         elif key == ord('\n'):  # Enter key to save and return
             if all(is_valid_base64(val) for val in user_values):  # Ensure all values are valid Base64
                 curses.noecho()
@@ -133,7 +134,8 @@ def get_repeated_input(current_value):
         elif key == curses.KEY_DOWN:  # Move cursor down
             cursor_pos = (cursor_pos + 1) % len(user_values)
         elif key == curses.KEY_BACKSPACE or key == 127:  # Backspace key
-            user_values[cursor_pos] = user_values[cursor_pos][:-1]  # Remove last character
+            if len(user_values[cursor_pos]) > 0:
+                user_values[cursor_pos] = user_values[cursor_pos][:-1]  # Remove last character
         else:
             try:
                 user_values[cursor_pos] += chr(key)  # Append valid character input to the selected field

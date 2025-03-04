@@ -474,9 +474,15 @@ def settings_menu(stdscr, interface):
 
 
 
+                # elif field.label == field.LABEL_REPEATED:  # Handle repeated field
+                #     new_value = get_repeated_input(current_value)
+                #     new_value = current_value if new_value is None else [base64.b64decode(item) for item in new_value.split(", ")]
                 elif field.label == field.LABEL_REPEATED:  # Handle repeated field
                     new_value = get_repeated_input(current_value)
-                    new_value = current_value if new_value is None else [base64.b64decode(item) for item in new_value.split(", ")]
+                    if new_value is None:
+                        new_value = current_value  # Keep the original bytes if no change
+                    else:
+                        new_value = [base64.b64decode(item) for item in new_value.split(", ") if item] 
 
                 elif field.enum_type:  # Enum field
                     enum_options = {v.name: v.number for v in field.enum_type.values}
