@@ -1,5 +1,7 @@
 import curses
+import base64
 import ipaddress
+import binascii
 from ui.colors import get_color
 
 def get_text_input(prompt):
@@ -27,7 +29,7 @@ def get_text_input(prompt):
 
     user_input = ""
     input_position = (3, 19)
-    row, col = input_position  # Unpack tuple
+    row, col = input_position
     while True:
         key = input_win.get_wch(row, col + len(user_input))  # Adjust cursor position dynamically
         if key == chr(27) or key == curses.KEY_LEFT:  # ESC or Left Arrow
@@ -39,7 +41,7 @@ def get_text_input(prompt):
             break
         elif key in (curses.KEY_BACKSPACE, chr(127)):  # Backspace
             user_input = user_input[:-1]
-            input_win.addstr(row, col, " " * (len(user_input) + 1), get_color("settings_default"))  # Clear the line
+            input_win.addstr(row, col, " " * (len(user_input) + 1), get_color("settings_default"))
             input_win.addstr(row, col, user_input, get_color("settings_default"))
         elif max_length is None or len(user_input) < max_length:  # Enforce max length if applicable
             # Append typed character to input text
@@ -57,9 +59,28 @@ def get_text_input(prompt):
     return user_input
 
 
+
+
+
 def get_repeated_input(current_value):
-    cvalue = current_value
-    height = 10
+    def to_base64(byte_strings):
+        """Convert byte values to Base64-encoded strings."""
+        return [base64.b64encode(b).decode() for b in byte_strings]
+
+    def is_valid_base64(s):
+        """Check if a string is valid Base64."""
+        try:
+            base64.b64decode(s, validate=True)
+            return True
+        except binascii.Error:
+            return False
+
+    def to_bytes(base64_strings):
+        """Convert valid Base64 strings to byte values."""
+        return [base64.b64decode(s) for s in base64_strings if is_valid_base64(s)]
+
+    cvalue = to_base64(current_value)  # Convert current values to Base64
+    height = 8
     width = 80
     start_y = (curses.LINES - height) // 2 - 2
     start_x = (curses.COLS - width) // 2
@@ -71,33 +92,52 @@ def get_repeated_input(current_value):
 
     curses.echo()
     curses.curs_set(1)
-    user_input = ""
+
+    # Editable list of values (max 3 values)
+    user_values = cvalue[:3]
+    cursor_pos = 0  # Track which value is being edited
+    error_message = ""
 
     while True:
         repeated_win.erase()
         repeated_win.border()
-        repeated_win.addstr(1, 2, "Enter comma-separated values:", get_color("settings_default", bold=True))
-        repeated_win.addstr(3, 2, f"Current: {', '.join(map(str, current_value))}", get_color("settings_default"))
-        repeated_win.addstr(5, 2, f"New value: {user_input}", get_color("settings_default"))
-        repeated_win.refresh()
+        repeated_win.addstr(1, 2, "Edit up to 3 Admin Keys:", get_color("settings_default", bold=True))
 
+        # Display current values, allowing editing
+        for i, line in enumerate(user_values):
+            prefix = "→ " if i == cursor_pos else "  "  # Highlight the current line
+            repeated_win.addstr(3 + i, 2, f"{prefix}Admin Key {i + 1}: {line}", get_color("settings_default", bold=(i == cursor_pos)))
+
+        # Show error message if needed
+        if error_message:
+            repeated_win.addstr(8, 2, error_message, get_color("error", bold=True))
+
+        repeated_win.refresh()
         key = repeated_win.getch()
 
-        if key == 27 or key == curses.KEY_LEFT:  # Escape or Left Arrow
+        if key == 27 or key == curses.KEY_LEFT:  # Escape or Left Arrow -> Cancel and return original
             repeated_win.erase()
             repeated_win.refresh()
             curses.noecho()
             curses.curs_set(0)
-            return cvalue  # Return the current value without changes
+            return ", ".join(cvalue)  # Return original Base64 strings
         elif key == ord('\n'):  # Enter key to save and return
-            curses.noecho()
-            curses.curs_set(0)
-            return user_input.split(",")  # Split the input into a list
+            if all(is_valid_base64(val) for val in user_values):  # Ensure all values are valid Base64
+                curses.noecho()
+                curses.curs_set(0)
+                return ", ".join(user_values)  # ✅ Directly return the edited Base64 values
+            else:
+                error_message = "Error: One or more values are not valid Base64!"
+        elif key == curses.KEY_UP:  # Move cursor up
+            cursor_pos = (cursor_pos - 1) % len(user_values)
+        elif key == curses.KEY_DOWN:  # Move cursor down
+            cursor_pos = (cursor_pos + 1) % len(user_values)
         elif key == curses.KEY_BACKSPACE or key == 127:  # Backspace key
-            user_input = user_input[:-1]
+            user_values[cursor_pos] = user_values[cursor_pos][:-1]  # Remove last character
         else:
             try:
-                user_input += chr(key)  # Append valid character input
+                user_values[cursor_pos] += chr(key)  # Append valid character input to the selected field
+                error_message = ""  # Clear error if user starts fixing input
             except ValueError:
                 pass  # Ignore invalid character inputs
 

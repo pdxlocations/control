@@ -1,3 +1,5 @@
+
+import base64
 import contextlib
 import curses
 import io
@@ -5,7 +7,6 @@ import logging
 import os
 import re
 import sys
-import textwrap
 import traceback
 
 import default_config as config
@@ -265,13 +266,6 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
     help_win = update_help_window(help_win, help_text, transformed_path, selected_option, max_help_lines, width, help_y, menu_win.getbegyx()[1])
 
 
-
-
-
-
-
-
-
 def settings_menu(stdscr, interface):
     curses.update_lines_cols()
 
@@ -327,7 +321,7 @@ def settings_menu(stdscr, interface):
 
             menu_win.refresh()
             help_win.refresh()
-            
+
         elif key == ord("\t") and show_save_option:
             old_selected_index = selected_index
             selected_index = max_index
@@ -478,9 +472,11 @@ def settings_menu(stdscr, interface):
                     new_value = get_list_input(human_readable_name, str(current_value),  ["True", "False"])
                     new_value = new_value == "True" or new_value is True
 
+
+
                 elif field.label == field.LABEL_REPEATED:  # Handle repeated field
                     new_value = get_repeated_input(current_value)
-                    new_value = current_value if new_value is None else [int(item) for item in new_value]
+                    new_value = current_value if new_value is None else [base64.b64decode(item) for item in new_value.split(", ")]
 
                 elif field.enum_type:  # Enum field
                     enum_options = {v.name: v.number for v in field.enum_type.values}
