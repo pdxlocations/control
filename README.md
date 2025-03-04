@@ -1,1 +1,1 @@
-# Unnamed-Meshtastic-Configuration-Tool
+# Control - A console-based configuration tool for Meshtastic nodes
