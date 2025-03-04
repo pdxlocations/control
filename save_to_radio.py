@@ -34,7 +34,7 @@ def save_changes(interface, menu_path, modified_settings):
                     logging.info("Clearing existing admin keys...")
                     del security_config.admin_key[:]
                     node.writeConfig("security")
-                    time.sleep(1)  # Give time for device to process
+                    time.sleep(2)  # Give time for device to process
 
                 # Append new keys
                 for key in valid_keys:
@@ -43,7 +43,6 @@ def save_changes(interface, menu_path, modified_settings):
 
                 # Write changes after all valid keys are added
                 node.writeConfig("security")
-                time.sleep(1)
                 logging.info("Admin keys updated successfully!")
 
             # Remove 'admin_key' from modified_settings to prevent interference
