@@ -8,7 +8,7 @@ def get_text_input(prompt):
     # Calculate the dynamic height and width for the input window
     height = 7  # Fixed height for input prompt
     width = 80
-    start_y = (curses.LINES - height) // 2 - 2
+    start_y = (curses.LINES - height) // 2
     start_x = (curses.COLS - width) // 2
 
     # Create a new window for user input
@@ -75,7 +75,7 @@ def get_admin_key_input(current_value):
     cvalue = to_base64(current_value)  # Convert current values to Base64
     height = 9
     width = 80
-    start_y = (curses.LINES - height) // 2 - 2
+    start_y = (curses.LINES - height) // 2
     start_x = (curses.COLS - width) // 2
 
     repeated_win = curses.newwin(height, width, start_y, start_x)
@@ -147,7 +147,7 @@ def get_admin_key_input(current_value):
 def get_repeated_input(current_value):
     height = 9
     width = 80
-    start_y = (curses.LINES - height) // 2 - 2
+    start_y = (curses.LINES - height) // 2
     start_x = (curses.COLS - width) // 2
 
     repeated_win = curses.newwin(height, width, start_y, start_x)
@@ -216,7 +216,7 @@ def get_fixed32_input(current_value):
     current_value = str(ipaddress.IPv4Address(current_value))
     height = 10
     width = 80
-    start_y = (curses.LINES - height) // 2 - 2
+    start_y = (curses.LINES - height) // 2
     start_x = (curses.COLS - width) // 2
 
     fixed32_win = curses.newwin(height, width, start_y, start_x)
@@ -274,9 +274,9 @@ def get_list_input(prompt, current_option, list_options):
     """
     selected_index = list_options.index(current_option) if current_option in list_options else 0
 
-    height = min(len(list_options) + 5, curses.LINES - 2)
+    height = min(len(list_options) + 5, curses.LINES)
     width = 80
-    start_y = (curses.LINES - height) // 2 - 2
+    start_y = (curses.LINES - height) // 2
     start_x = (curses.COLS - width) // 2
 
     list_win = curses.newwin(height, width, start_y, start_x)
@@ -331,7 +331,7 @@ def move_highlight(old_idx, new_idx, options, list_win, list_pad):
 
     list_win.refresh()
 
-    start_index = max(0, new_idx - (list_win.getmaxyx()[0] - 4))
+    start_index = max(0, new_idx - (list_win.getmaxyx()[0] - 5))
 
     list_win.refresh()
     list_pad.refresh(start_index, 0,
