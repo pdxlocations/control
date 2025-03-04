@@ -145,19 +145,6 @@ def get_admin_key_input(current_value):
 
 
 def get_repeated_input(current_value):
-    def to_base64(byte_strings):
-        """Convert byte values to Base64-encoded strings."""
-        return [base64.b64encode(b).decode() for b in byte_strings]
-
-    def is_valid_base64(s):
-        """Check if a string is valid Base64."""
-        try:
-            base64.b64decode(s, validate=True)
-            return True
-        except binascii.Error:
-            return False
-
-    cvalue = to_base64(current_value)  # Convert current values to Base64
     height = 9
     width = 80
     start_y = (curses.LINES - height) // 2 - 2
@@ -172,7 +159,7 @@ def get_repeated_input(current_value):
     curses.curs_set(1)  #  Show the cursor
 
     # Editable list of values (max 3 values)
-    user_values = cvalue[:3]
+    user_values = current_value[:3]
     cursor_pos = 0  # Track which value is being edited
     error_message = ""
 
@@ -203,7 +190,7 @@ def get_repeated_input(current_value):
             repeated_win.refresh()
             curses.noecho()
             curses.curs_set(0)
-            cvalue
+            return None
         
         elif key == ord('\n'):  # Enter key to save and return
             curses.noecho()

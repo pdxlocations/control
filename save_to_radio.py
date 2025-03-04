@@ -18,8 +18,6 @@ def save_changes(interface, menu_path, modified_settings):
         
         node = interface.getNode('^local')
 
-
-        
         if 'admin_key' in modified_settings:
             # Get reference to security config
             security_config = node.localConfig.security
