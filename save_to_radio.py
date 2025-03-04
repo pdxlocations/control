@@ -40,11 +40,11 @@ def save_changes(interface, menu_path, modified_settings):
                 for key in valid_keys:
                     logging.info(f"Adding admin key: {key}")
                     security_config.admin_key.append(key)
-
-                # Write changes after all valid keys are added
                 node.writeConfig("security")
                 logging.info("Admin keys updated successfully!")
-
+            
+            # Backup 'admin_key' before removing it
+            admin_key_backup = modified_settings.get('admin_key', None)
             # Remove 'admin_key' from modified_settings to prevent interference
             del modified_settings['admin_key']
 
@@ -149,6 +149,9 @@ def save_changes(interface, menu_path, modified_settings):
         try:
             node.writeConfig(config_category)
             logging.info(f"Changes written to config category: {config_category}")
+
+            if admin_key_backup is not None:
+                modified_settings['admin_key'] = admin_key_backup
         except Exception as e:
             logging.error(f"Failed to write configuration for category '{config_category}': {e}")
 
