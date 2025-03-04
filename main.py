@@ -1,3 +1,5 @@
+
+import base64
 import contextlib
 import curses
 import io
@@ -5,13 +7,12 @@ import logging
 import os
 import re
 import sys
-import textwrap
 import traceback
 
 import default_config as config
 from save_to_radio import save_changes
 from utilities.config_io import config_export, config_import
-from input_handlers import get_repeated_input, get_text_input, get_fixed32_input, get_list_input
+from input_handlers import get_repeated_input, get_text_input, get_fixed32_input, get_list_input, get_admin_key_input
 from menus import generate_menu_from_protobuf
 from ui.colors import setup_colors, get_color
 from utilities.arg_parser import setup_parser
@@ -265,13 +266,6 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
     help_win = update_help_window(help_win, help_text, transformed_path, selected_option, max_help_lines, width, help_y, menu_win.getbegyx()[1])
 
 
-
-
-
-
-
-
-
 def settings_menu(stdscr, interface):
     curses.update_lines_cols()
 
@@ -327,7 +321,7 @@ def settings_menu(stdscr, interface):
 
             menu_win.refresh()
             help_win.refresh()
-            
+
         elif key == ord("\t") and show_save_option:
             old_selected_index = selected_index
             selected_index = max_index
@@ -408,7 +402,6 @@ def settings_menu(stdscr, interface):
                     if overwrite == "Yes":
                         config_import(interface, file_path)
                 continue
-
             elif selected_option == "Reboot":
                 confirmation = get_list_input("Are you sure you want to Reboot?", None,  ["Yes", "No"])
                 if confirmation == "Yes":
@@ -474,13 +467,23 @@ def settings_menu(stdscr, interface):
                         if option in current_menu:
                             modified_settings[option] = current_menu[option][1]
 
+                elif selected_option == "admin_key":
+                    new_values = get_admin_key_input(current_value)
+                    new_value = current_value if new_values is None else [base64.b64decode(key) for key in new_values]
+
                 elif field.type == 8:  # Handle boolean type
                     new_value = get_list_input(human_readable_name, str(current_value),  ["True", "False"])
                     new_value = new_value == "True" or new_value is True
 
                 elif field.label == field.LABEL_REPEATED:  # Handle repeated field
                     new_value = get_repeated_input(current_value)
-                    new_value = current_value if new_value is None else [int(item) for item in new_value]
+                    new_value = current_value if new_value is None else new_value.split(", ")
+
+
+                # elif field.label == field.LABEL_REPEATED:  # Handle repeated field
+                #     new_value = get_repeated_input(current_value)
+                #     new_value = current_value if new_value is None else [base64.b64decode(item) for item in new_value.split(", ")]
+
 
                 elif field.enum_type:  # Enum field
                     enum_options = {v.name: v.number for v in field.enum_type.values}

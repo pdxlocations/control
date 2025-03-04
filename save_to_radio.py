@@ -2,6 +2,7 @@ from meshtastic.protobuf import channel_pb2
 from google.protobuf.message import Message
 import logging
 import base64
+import time
 
 def save_changes(interface, menu_path, modified_settings):
     """
@@ -16,6 +17,40 @@ def save_changes(interface, menu_path, modified_settings):
             return
         
         node = interface.getNode('^local')
+
+        if 'admin_key' in modified_settings:
+            # Get reference to security config
+            security_config = node.localConfig.security
+            admin_keys = modified_settings['admin_key']
+
+            # Filter out empty keys
+            valid_keys = [key for key in admin_keys if key and key.strip() and key != b'']
+
+            if not valid_keys:
+                logging.warning("No valid admin keys provided. Skipping admin key update.")
+            else:
+                # Clear existing keys if needed
+                if security_config.admin_key:
+                    logging.info("Clearing existing admin keys...")
+                    del security_config.admin_key[:]
+                    node.writeConfig("security")
+                    time.sleep(2)  # Give time for device to process
+
+                # Append new keys
+                for key in valid_keys:
+                    logging.info(f"Adding admin key: {key}")
+                    security_config.admin_key.append(key)
+
+                # Write changes after all valid keys are added
+                node.writeConfig("security")
+                logging.info("Admin keys updated successfully!")
+
+            # Remove 'admin_key' from modified_settings to prevent interference
+            del modified_settings['admin_key']
+
+            # Return early if there are no other settings left to process
+            if not modified_settings:
+                return
 
         if menu_path[1] ==  "Radio Settings" or menu_path[1] == "Module Settings":
             config_category = menu_path[2].lower() # for radio and module configs
