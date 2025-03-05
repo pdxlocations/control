@@ -16,6 +16,7 @@ from input_handlers import get_repeated_input, get_text_input, get_fixed32_input
 from menus import generate_menu_from_protobuf
 from ui.colors import setup_colors, get_color
 from ui.dialog import dialog
+from ui.splash import draw_splash
 from utilities.arg_parser import setup_parser
 from utilities.interfaces import initialize_interface
 from utilities.settings_utils import parse_ini_file, transform_menu_path
@@ -593,6 +594,7 @@ def main(stdscr):
 
    
             setup_colors()
+            draw_splash(stdscr)
             curses.curs_set(0)
             stdscr.keypad(True)
 
