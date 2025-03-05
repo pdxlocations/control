@@ -23,7 +23,7 @@ def extract_fields(message_instance, current_config=None):
     menu = {}
     fields = message_instance.DESCRIPTOR.fields
     for field in fields:
-        skip_fields = ["sessionkey", "ChannelSettings.channel_num", "ChannelSettings.id", "LoRaConfig.ignore_incoming"]
+        skip_fields = ["sessionkey", "ChannelSettings.channel_num", "ChannelSettings.id", "LoRaConfig.ignore_incoming", "DeviceUIConfig.version"]
         if any(skip_field in field.full_name for skip_field in skip_fields):
             continue
 
