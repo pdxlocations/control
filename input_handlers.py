@@ -1,7 +1,7 @@
-import curses
 import base64
-import ipaddress
 import binascii
+import curses
+import ipaddress
 from ui.colors import get_color
 
 def get_text_input(prompt):
@@ -58,10 +58,6 @@ def get_text_input(prompt):
     input_win.refresh()
     return user_input
 
-
-import curses
-import base64
-import binascii
 
 def get_admin_key_input(current_value):
     def to_base64(byte_strings):
