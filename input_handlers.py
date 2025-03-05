@@ -59,6 +59,10 @@ def get_text_input(prompt):
     return user_input
 
 
+import curses
+import base64
+import binascii
+
 def get_admin_key_input(current_value):
     def to_base64(byte_strings):
         """Convert byte values to Base64-encoded strings."""
@@ -67,8 +71,8 @@ def get_admin_key_input(current_value):
     def is_valid_base64(s):
         """Check if a string is valid Base64."""
         try:
-            base64.b64decode(s, validate=True)
-            return True
+            decoded = base64.b64decode(s, validate=True)
+            return len(decoded) == 32  # Ensure it's exactly 32 bytes
         except binascii.Error:
             return False
 
@@ -100,11 +104,11 @@ def get_admin_key_input(current_value):
         for i, line in enumerate(user_values):
             prefix = "→ " if i == cursor_pos else "  "  # Highlight the current line
             repeated_win.addstr(3 + i, 2, f"{prefix}Admin Key {i + 1}: ", get_color("settings_default", bold=(i == cursor_pos)))
-            repeated_win.addstr(3 + i, 18, line)  #  Align text for easier editing
+            repeated_win.addstr(3 + i, 18, line)  # Align text for easier editing
 
         # Move cursor to the correct position inside the field
         curses.curs_set(1)
-        repeated_win.move(3 + cursor_pos, 18 + len(user_values[cursor_pos]))  #  Position cursor at end of text
+        repeated_win.move(3 + cursor_pos, 18 + len(user_values[cursor_pos]))  # Position cursor at end of text
 
         # Show error message if needed
         if error_message:
@@ -121,13 +125,12 @@ def get_admin_key_input(current_value):
             return None
         
         elif key == ord('\n'):  # Enter key to save and return
-            if all(is_valid_base64(val) for val in user_values):  # Ensure all values are valid Base64
+            if all(is_valid_base64(val) for val in user_values):  # Ensure all values are valid Base64 and 32 bytes
                 curses.noecho()
                 curses.curs_set(0)
                 return user_values  # Return the edited Base64 values
-                
             else:
-                error_message = "Error: One or more values are not valid Base64!"
+                error_message = "Error: Each key must be valid Base64 and 32 bytes long!"
         elif key == curses.KEY_UP:  # Move cursor up
             cursor_pos = (cursor_pos - 1) % len(user_values)
         elif key == curses.KEY_DOWN:  # Move cursor down
