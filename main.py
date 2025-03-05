@@ -590,9 +590,7 @@ def main(stdscr):
 
     output_capture = io.StringIO()
     try:
-        with contextlib.redirect_stdout(output_capture), contextlib.redirect_stderr(output_capture):
-
-   
+        with contextlib.redirect_stdout(output_capture), contextlib.redirect_stderr(output_capture):   
             setup_colors()
             draw_splash(stdscr)
             curses.curs_set(0)
@@ -608,6 +606,8 @@ def main(stdscr):
                     set_region(interface)
                     interface.close()
                     interface = initialize_interface(args)
+            stdscr.clear()
+            stdscr.refresh()
             settings_menu(stdscr, interface)
 
     except Exception as e:
