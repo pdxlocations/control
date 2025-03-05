@@ -15,6 +15,7 @@ from utilities.config_io import config_export, config_import
 from input_handlers import get_repeated_input, get_text_input, get_fixed32_input, get_list_input, get_admin_key_input
 from menus import generate_menu_from_protobuf
 from ui.colors import setup_colors, get_color
+from ui.dialog import dialog
 from utilities.arg_parser import setup_parser
 from utilities.interfaces import initialize_interface
 from utilities.settings_utils import parse_ini_file, transform_menu_path
@@ -379,13 +380,15 @@ def settings_menu(stdscr, interface):
 
                     if os.path.exists(yaml_file_path):
                         overwrite = get_list_input(f"{filename} already exists. Overwrite?", None, ["Yes", "No"])
-                        if overwrite == "Yes":
+                        if overwrite == "No":
                             logging.info("Export cancelled: User chose not to overwrite.")
                             continue  # Return to menu
                     os.makedirs(os.path.dirname(yaml_file_path), exist_ok=True)
                     with open(yaml_file_path, "w", encoding="utf-8") as file:
                         file.write(config_text)
                     logging.info(f"Config file saved to {yaml_file_path}")
+                    dialog(stdscr, "Config File Saved:", yaml_file_path)
+                    
                     continue
                 except PermissionError:
                     logging.error(f"Permission denied: Unable to write to {yaml_file_path}")
@@ -480,15 +483,9 @@ def settings_menu(stdscr, interface):
                     new_value = get_list_input(human_readable_name, str(current_value),  ["True", "False"])
                     new_value = new_value == "True" or new_value is True
 
-                elif field.label == field.LABEL_REPEATED:  # Handle repeated field
+                elif field.label == field.LABEL_REPEATED:  # Handle repeated field - Not currently used
                     new_value = get_repeated_input(current_value)
                     new_value = current_value if new_value is None else new_value.split(", ")
-
-
-                # elif field.label == field.LABEL_REPEATED:  # Handle repeated field
-                #     new_value = get_repeated_input(current_value)
-                #     new_value = current_value if new_value is None else [base64.b64decode(item) for item in new_value.split(", ")]
-
 
                 elif field.enum_type:  # Enum field
                     enum_options = {v.name: v.number for v in field.enum_type.values}
