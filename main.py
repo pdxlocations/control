@@ -168,20 +168,27 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
         """Extracts and replaces ANSI color codes, ensuring spaces are preserved."""
         matches = []
         last_pos = 0
+        pattern_matches = []
 
+        # Find all matches and store their positions
         for pattern, (color, bold, underline) in color_mappings.items():
             for match in re.finditer(pattern, text):
-                start, end, content = match.start(), match.end(), match.group(1)
-                
-                # Preserve non-matching text including spaces
-                if last_pos < start:
-                    segment = text[last_pos:start]
-                    matches.append((segment, "settings_default", False, False))
-                
-                matches.append((content, color, bold, underline))
-                last_pos = end
+                pattern_matches.append((match.start(), match.end(), match.group(1), color, bold, underline))
 
-        # Preserve trailing text including spaces
+        # Sort matches by start position to process sequentially
+        pattern_matches.sort(key=lambda x: x[0])
+
+        for start, end, content, color, bold, underline in pattern_matches:
+            # Preserve non-matching text including spaces
+            if last_pos < start:
+                segment = text[last_pos:start]
+                matches.append((segment, "settings_default", False, False))
+            
+            # Append the colored segment
+            matches.append((content, color, bold, underline))
+            last_pos = end
+
+        # Preserve any trailing text
         if last_pos < len(text):
             matches.append((text[last_pos:], "settings_default", False, False))
 
@@ -213,14 +220,14 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
 
         return wrapped_lines
 
-    # Extract color segments
-    raw_lines = help_content.split("\\n")  # Preserve manual new lines
+    raw_lines = help_content.split("\\n")  # Preserve new lines
     wrapped_help = []
 
     for raw_line in raw_lines:
         color_segments = extract_ansi_segments(raw_line)
         wrapped_segments = wrap_ansi_text(color_segments, wrap_width)
         wrapped_help.extend(wrapped_segments)
+        pass
 
     # Trim and add ellipsis if needed
     if len(wrapped_help) > max_lines:
@@ -228,7 +235,6 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
         wrapped_help[-1].append(("...", "settings_default", False, False))  
 
     return wrapped_help
-
 
 
 def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path, max_help_lines):
@@ -354,7 +360,6 @@ def settings_menu(stdscr, interface):
 
             if selected_option == "Exit":
                 break
-
 
             elif selected_option == "Export Config":
                 filename = get_text_input("Enter a filename for the config file")
