@@ -1,5 +1,7 @@
 # Control - A console-based configuration tool for Meshtastic nodes
 
+Control for Meshtastic is a fully-featured Meshtastic configuration tool made for running in console, utilizing Curses.
+
 <img width="573" alt="Screenshot 2025-03-04 at 4 30 50 PM" src="https://github.com/user-attachments/assets/bc6a6590-f026-440c-9408-b26a644a2906" />
 
 ## Arguments
