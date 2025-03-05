@@ -615,12 +615,12 @@ def main(stdscr):
         logging.error("An error occurred: %s", e)
         logging.error("Traceback: %s", traceback.format_exc())
         logging.error("Console output before crash:\n%s", console_output)
-        raise  # Re-raise only unexpected errors
+        raise
 
 
 logging.basicConfig( # Run `tail -f client.log` in another terminal to view live
     filename=config.log_file_path,
-    level=logging.INFO,  # DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    level=logging.WARNING,  # DEBUG, INFO, WARNING, ERROR, CRITICAL)
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
