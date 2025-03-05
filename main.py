@@ -402,11 +402,23 @@ def settings_menu(stdscr, interface):
                 app_directory = os.path.dirname(os.path.abspath(__file__))
                 config_folder = "node-configs"
                 folder_path = os.path.join(app_directory, config_folder)
+
+                # Check if folder exists and is not empty
+                if not os.path.exists(folder_path) or not any(os.listdir(folder_path)):
+                    dialog(stdscr, "", " No config files found. Export a config first.")
+                    continue  # Return to menu
+
                 file_list = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+
+                # Ensure file_list is not empty before proceeding
+                if not file_list:
+                    dialog(stdscr, "", " No config files found. Export a config first.")
+                    continue
+
                 filename = get_list_input("Choose a config file", None, file_list)
                 if filename:
                     file_path = os.path.join(app_directory, config_folder, filename)
-                    overwrite = get_list_input(f"Are you sure you want to load {filename}?", None,  ["Yes", "No"])
+                    overwrite = get_list_input(f"Are you sure you want to load {filename}?", None, ["Yes", "No"])
                     if overwrite == "Yes":
                         config_import(interface, file_path)
                 continue
