@@ -363,7 +363,7 @@ def settings_menu(stdscr, interface):
             if selected_option == "Exit":
                 break
 
-            elif selected_option == "Export Config":
+            elif selected_option == "Export Config File":
                 filename = get_text_input("Enter a filename for the config file")
 
                 if not filename:
@@ -399,7 +399,7 @@ def settings_menu(stdscr, interface):
                     logging.error(f"Unexpected error: {e}")
                 continue
 
-            elif selected_option == "Load Config":
+            elif selected_option == "Load Config File":
                 app_directory = os.path.dirname(os.path.abspath(__file__))
                 config_folder = "node-configs"
                 folder_path = os.path.join(app_directory, config_folder)
@@ -423,6 +423,22 @@ def settings_menu(stdscr, interface):
                     if overwrite == "Yes":
                         config_import(interface, file_path)
                 continue
+
+
+            elif selected_option == "Config URL":
+                current_value = interface.localNode.getURL()
+                new_value = get_text_input(f"Config URL is currently: {current_value}")
+                if new_value is not None:
+                    current_value = new_value
+                    overwrite = get_list_input(f"Are you sure you want to load this config?", None, ["Yes", "No"])
+                    if overwrite == "Yes":
+                        interface.localNode.setURL(new_value)
+                        logging.info(f"New Config URL sent to node")
+                continue
+
+
+
+
             elif selected_option == "Reboot":
                 confirmation = get_list_input("Are you sure you want to Reboot?", None,  ["Yes", "No"])
                 if confirmation == "Yes":
