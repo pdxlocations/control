@@ -363,7 +363,7 @@ def settings_menu(stdscr, interface):
             if selected_option == "Exit":
                 break
 
-            elif selected_option == "Export Config":
+            elif selected_option == "Export Config File":
                 filename = get_text_input("Enter a filename for the config file")
 
                 if not filename:
@@ -399,7 +399,7 @@ def settings_menu(stdscr, interface):
                     logging.error(f"Unexpected error: {e}")
                 continue
 
-            elif selected_option == "Load Config":
+            elif selected_option == "Load Config File":
                 app_directory = os.path.dirname(os.path.abspath(__file__))
                 config_folder = "node-configs"
                 folder_path = os.path.join(app_directory, config_folder)
