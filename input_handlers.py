@@ -2,33 +2,59 @@ import base64
 import binascii
 import curses
 import ipaddress
+import re
 from ui.colors import get_color
 
-def get_text_input(prompt):
-    # Calculate the dynamic height and width for the input window
+def wrap_text(text, wrap_width):
+    """Wraps text while preserving spaces."""
+    words = re.findall(r'\S+|\s+', text)  # Capture words and spaces separately
+    wrapped_lines = []
+    line_buffer = ""
+    line_length = 0
+
+    for word in words:
+        word_length = len(word)
+        if line_length + word_length > wrap_width and word.strip():
+            wrapped_lines.append(line_buffer)
+            line_buffer = ""
+            line_length = 0
+        line_buffer += word
+        line_length += word_length
+
+    if line_buffer:
+        wrapped_lines.append(line_buffer)
+    
+    return wrapped_lines
+
+def get_text_input(prompt, wrap_width=60):
+    """Handles user input with wrapped text for long prompts."""
     height = 7  # Fixed height for input prompt
     width = 80
     start_y = (curses.LINES - height) // 2
     start_x = (curses.COLS - width) // 2
 
-    # Create a new window for user input
     input_win = curses.newwin(height, width, start_y, start_x)
     input_win.bkgd(get_color("background"))
     input_win.attrset(get_color("window_frame"))
     input_win.border()
 
-    # Display the prompt
-    input_win.addstr(1, 2, prompt, get_color("settings_default", bold=True))
-    input_win.addstr(3, 2, "Enter new value: ", get_color("settings_default"))
+    # Wrap the prompt text
+    wrapped_prompt = wrap_text(prompt, wrap_width)
+    row = 1
+    for line in wrapped_prompt:
+        input_win.addstr(row, 2, line, get_color("settings_default", bold=True))
+        row += 1
+        if row >= height - 3:  # Prevent overflow
+            break
+    
+    input_win.addstr(row, 2, "Enter new value: ", get_color("settings_default"))
     input_win.refresh()
 
-    # Check if "shortName" is in the prompt, and set max length accordingly
     max_length = 4 if "shortName" in prompt else None
-
     curses.curs_set(1)
 
     user_input = ""
-    input_position = (3, 19)
+    input_position = (row, 19)
     row, col = input_position
     while True:
         key = input_win.get_wch(row, col + len(user_input))  # Adjust cursor position dynamically
@@ -44,19 +70,17 @@ def get_text_input(prompt):
             input_win.addstr(row, col, " " * (len(user_input) + 1), get_color("settings_default"))
             input_win.addstr(row, col, user_input, get_color("settings_default"))
         elif max_length is None or len(user_input) < max_length:  # Enforce max length if applicable
-            # Append typed character to input text
-            if(isinstance(key, str)):
+            if isinstance(key, str):
                 user_input += key
             else:
                 user_input += chr(key)
-            input_win.addstr(3, 19, user_input, get_color("settings_default"))
+            input_win.addstr(row, 19, user_input, get_color("settings_default"))
 
     curses.curs_set(0)
-
-    # Clear the input window
     input_win.erase()
     input_win.refresh()
     return user_input
+
 
 
 def get_admin_key_input(current_value):
