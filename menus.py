@@ -111,6 +111,7 @@ def generate_menu_from_protobuf(interface):
     menu_structure["Main Menu"].update({
         "Export Config": None,
         "Load Config": None,
+        "Config URL": None,
         "Reboot": None,
         "Reset Node DB": None,
         "Shutdown": None,
