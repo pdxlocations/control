@@ -6,30 +6,47 @@ import re
 from ui.colors import get_color
 
 def wrap_text(text, wrap_width):
-    """Wraps text while preserving spaces."""
+    """Wraps text while preserving spaces and breaking long words."""
     words = re.findall(r'\S+|\s+', text)  # Capture words and spaces separately
     wrapped_lines = []
     line_buffer = ""
     line_length = 0
+    wrap_width -= 2
 
     for word in words:
         word_length = len(word)
+
+        if word_length > wrap_width:  # Break long words
+            if line_buffer:
+                wrapped_lines.append(line_buffer)
+                line_buffer = ""
+                line_length = 0
+            for i in range(0, word_length, wrap_width):
+                wrapped_lines.append(word[i:i+wrap_width])
+            continue
+
         if line_length + word_length > wrap_width and word.strip():
             wrapped_lines.append(line_buffer)
             line_buffer = ""
             line_length = 0
+
         line_buffer += word
         line_length += word_length
 
     if line_buffer:
         wrapped_lines.append(line_buffer)
-    
-    return wrapped_lines
 
-def get_text_input(prompt, wrap_width=60):
+    return wrapped_lines
+    
+
+def get_text_input(prompt):
     """Handles user input with wrapped text for long prompts."""
-    height = 7  # Fixed height for input prompt
+    height = 8
     width = 80
+    margin = 2  # Left and right margin
+    input_width = width - (2 * margin)  # Space available for text
+    max_input_rows = height - 4  # Space for input
+
     start_y = (curses.LINES - height) // 2
     start_x = (curses.COLS - width) // 2
 
@@ -39,48 +56,75 @@ def get_text_input(prompt, wrap_width=60):
     input_win.border()
 
     # Wrap the prompt text
-    wrapped_prompt = wrap_text(prompt, wrap_width)
+    wrapped_prompt = wrap_text(prompt, wrap_width=input_width)
     row = 1
     for line in wrapped_prompt:
-        input_win.addstr(row, 2, line, get_color("settings_default", bold=True))
+        input_win.addstr(row, margin, line[:input_width], get_color("settings_default", bold=True))
         row += 1
         if row >= height - 3:  # Prevent overflow
             break
-    
-    input_win.addstr(row, 2, "Enter new value: ", get_color("settings_default"))
-    input_win.refresh()
 
-    max_length = 4 if "shortName" in prompt else None
+    prompt_text = "Enter new value: "
+    input_win.addstr(row + 1, margin, prompt_text, get_color("settings_default"))
+    
+    input_win.refresh()
     curses.curs_set(1)
 
+    max_length = 4 if "shortName" in prompt else None
     user_input = ""
-    input_position = (row, 19)
-    row, col = input_position
+
+    # Start user input after the prompt text
+    col_start = margin + len(prompt_text)
+    first_line_width = input_width - len(prompt_text)  # Available space for first line
+
     while True:
-        key = input_win.get_wch(row, col + len(user_input))  # Adjust cursor position dynamically
+        key = input_win.get_wch()  # Waits for user input
+
         if key == chr(27) or key == curses.KEY_LEFT:  # ESC or Left Arrow
             input_win.erase()
             input_win.refresh()
             curses.curs_set(0)
-            return None  # Exit without returning a value
-        elif key in (chr(curses.KEY_ENTER), chr(10), chr(13)):
+            return None  # Exit without saving
+
+        elif key in (chr(curses.KEY_ENTER), chr(10), chr(13)):  # Enter key
             break
-        elif key in (curses.KEY_BACKSPACE, chr(127)):  # Backspace
-            user_input = user_input[:-1]
-            input_win.addstr(row, col, " " * (len(user_input) + 1), get_color("settings_default"))
-            input_win.addstr(row, col, user_input, get_color("settings_default"))
-        elif max_length is None or len(user_input) < max_length:  # Enforce max length if applicable
+
+        elif key in (curses.KEY_BACKSPACE, chr(127)):  # Handle Backspace
+            if user_input:
+                user_input = user_input[:-1]  # Remove last character
+
+        elif max_length is None or len(user_input) < max_length:  # Enforce max length
             if isinstance(key, str):
                 user_input += key
             else:
                 user_input += chr(key)
-            input_win.addstr(row, 19, user_input, get_color("settings_default"))
+
+        # First line must be manually handled before using wrap_text()
+        first_line = user_input[:first_line_width]  # Cut to max first line width
+        remaining_text = user_input[first_line_width:]  # Remaining text for wrapping
+
+        wrapped_lines = wrap_text(remaining_text, wrap_width=input_width) if remaining_text else []
+        
+        # Clear only the input area (without touching prompt text)
+        for i in range(max_input_rows):
+            if row + 1 + i < height - 1:
+                input_win.addstr(row + 1 + i, margin, " " * min(input_width, width - margin - 1), get_color("settings_default"))
+
+        # Redraw the prompt text so it never disappears
+        input_win.addstr(row + 1, margin, prompt_text, get_color("settings_default"))
+
+        # Redraw wrapped input
+        input_win.addstr(row + 1, col_start, first_line, get_color("settings_default"))  # First line next to prompt
+        for i, line in enumerate(wrapped_lines):
+            if row + 2 + i < height - 1:
+                input_win.addstr(row + 2 + i, margin, line[:input_width], get_color("settings_default"))
+
+        input_win.refresh()
 
     curses.curs_set(0)
     input_win.erase()
     input_win.refresh()
     return user_input
-
 
 
 def get_admin_key_input(current_value):
