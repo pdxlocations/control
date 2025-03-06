@@ -11,7 +11,8 @@ def wrap_text(text, wrap_width):
     wrapped_lines = []
     line_buffer = ""
     line_length = 0
-    wrap_width -= 2
+    margin = 2  # Left and right margin
+    wrap_width -= margin
 
     for word in words:
         word_length = len(word)
