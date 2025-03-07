@@ -5,8 +5,8 @@ import logging
 import sys
 import traceback
 
-import default_config as config
-from input_handlers import get_list_input
+import ui.default_config as config
+from utilities.input_handlers import get_list_input
 from ui.colors import setup_colors
 from ui.splash import draw_splash
 from ui.control_ui import set_region, settings_menu
