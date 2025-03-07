@@ -11,7 +11,7 @@ from input_handlers import get_repeated_input, get_text_input, get_fixed32_input
 from menus import generate_menu_from_protobuf
 from ui.colors import get_color
 from ui.dialog import dialog
-from utilities.settings_utils import parse_ini_file, transform_menu_path
+from utilities.control_utils import parse_ini_file, transform_menu_path
 from user_config import json_editor
 
 # Constants
