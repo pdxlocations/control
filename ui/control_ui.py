@@ -5,14 +5,14 @@ import os
 import re
 import sys
 
-from save_to_radio import save_changes
+from utilities.save_to_radio import save_changes
 from utilities.config_io import config_export, config_import
-from input_handlers import get_repeated_input, get_text_input, get_fixed32_input, get_list_input, get_admin_key_input
-from menus import generate_menu_from_protobuf
+from utilities.input_handlers import get_repeated_input, get_text_input, get_fixed32_input, get_list_input, get_admin_key_input
+from ui.menus import generate_menu_from_protobuf
 from ui.colors import get_color
 from ui.dialog import dialog
-from utilities.settings_utils import parse_ini_file, transform_menu_path
-from user_config import json_editor
+from utilities.control_utils import parse_ini_file, transform_menu_path
+from ui.user_config import json_editor
 
 # Constants
 width = 80

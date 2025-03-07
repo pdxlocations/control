@@ -107,6 +107,8 @@ def initialize_config():
         "settings_sensitive": ["green", "black"],
         "settings_save": ["green", "black"],
         "settings_breadcrumbs": ["green", "black"],
+        "settings_save": ["green", "black"],
+        "settings_breadcrumbs": ["green", "black"],
         "settings_warning": ["green", "black"],
         "settings_note": ["green", "black"]
     }
