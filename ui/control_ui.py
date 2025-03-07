@@ -14,7 +14,6 @@ from ui.dialog import dialog
 from utilities.settings_utils import parse_ini_file, transform_menu_path
 from user_config import json_editor
 
-
 # Constants
 width = 80
 save_option = "Save Changes"
@@ -242,7 +241,6 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
 
 
 def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path, max_help_lines):
-    # global help_win
 
     if old_idx == new_idx:  # No-op
         return
@@ -370,14 +368,11 @@ def settings_menu(stdscr, interface):
             if selected_option == "Exit":
                 break
 
-
             elif selected_option == "Export Config File":
                 filename = get_text_input("Enter a filename for the config file")
-
                 if not filename:
                     logging.info("Export aborted: No filename provided.")
                     continue  # Go back to the menu
-
                 if not filename.lower().endswith(".yaml"):
                     filename += ".yaml"
 
@@ -429,7 +424,6 @@ def settings_menu(stdscr, interface):
                         config_import(interface, file_path)
                 continue
 
-
             elif selected_option == "Config URL":
                 current_value = interface.localNode.getURL()
                 new_value = get_text_input(f"Config URL is currently: {current_value}")
@@ -441,33 +435,34 @@ def settings_menu(stdscr, interface):
                         logging.info(f"New Config URL sent to node")
                 continue
 
-
-
-
             elif selected_option == "Reboot":
                 confirmation = get_list_input("Are you sure you want to Reboot?", None,  ["Yes", "No"])
                 if confirmation == "Yes":
                     interface.localNode.reboot()
                     logging.info(f"Node Reboot Requested by menu")
                 continue
+
             elif selected_option == "Reset Node DB":
                 confirmation = get_list_input("Are you sure you want to Reset Node DB?", None,  ["Yes", "No"])
                 if confirmation == "Yes":
                     interface.localNode.resetNodeDb()
                     logging.info(f"Node DB Reset Requested by menu")
                 continue
+
             elif selected_option == "Shutdown":
                 confirmation = get_list_input("Are you sure you want to Shutdown?", None, ["Yes", "No"])
                 if confirmation == "Yes":
                     interface.localNode.shutdown()
                     logging.info(f"Node Shutdown Requested by menu")
                 continue
+
             elif selected_option == "Factory Reset":
                 confirmation = get_list_input("Are you sure you want to Factory Reset?", None,  ["Yes", "No"])
                 if confirmation == "Yes":
                     interface.localNode.factoryReset()
                     logging.info(f"Factory Reset Requested by menu")
                 continue
+
             # elif selected_option == "App Settings":
             #     menu_win.clear()
             #     menu_win.refresh()
