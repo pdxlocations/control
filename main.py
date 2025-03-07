@@ -367,7 +367,7 @@ def settings_menu(stdscr, interface):
                 filename = get_text_input("Enter a filename for the config file")
 
                 if not filename:
-                    logging.warning("Export aborted: No filename provided.")
+                    logging.info("Export aborted: No filename provided.")
                     continue  # Go back to the menu
 
                 if not filename.lower().endswith(".yaml"):
