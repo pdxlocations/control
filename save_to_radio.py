@@ -1,8 +1,8 @@
-from meshtastic.protobuf import channel_pb2
-from google.protobuf.message import Message
-import logging
 import base64
+import logging
 import time
+from google.protobuf.message import Message
+from meshtastic.protobuf import channel_pb2
 
 def save_changes(interface, menu_path, modified_settings):
     """

@@ -14,8 +14,11 @@ def initialize_interface(args, interface = None):
                 logging.error(f"You probably need to add yourself to the `dialout` group to use a serial connection. {ex}")
             except Exception as ex:
                 logging.error(f"Unexpected error initializing interface: {ex}")
+                
             if interface.devPath is None:
                 return meshtastic.tcp_interface.TCPInterface("meshtastic.local")
+            if interface.devPath is None:
+                return meshtastic.tcp_interface.TCPInterface("localhost")
     
     except Exception as ex:
         logging.critical(f"Fatal error initializing interface: {ex}")
