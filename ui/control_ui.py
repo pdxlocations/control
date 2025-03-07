@@ -15,13 +15,23 @@ from utilities.settings_utils import parse_ini_file, transform_menu_path
 from user_config import json_editor
 
 
+# Constants
 width = 80
 save_option = "Save Changes"
 max_help_lines = 0
 help_win = None
 sensitive_settings = ["Reboot", "Reset Node DB", "Shutdown", "Factory Reset"]
-locals_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
+
+# Get the parent directory of the script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
+
+# Paths
+locals_dir = os.path.dirname(os.path.abspath(sys.argv[0]))  # Current script directory
 translation_file = os.path.join(locals_dir, "localisations", "en.ini")
+config_folder = os.path.join(parent_dir, "node-configs")
+
+# Load translations
 field_mapping, help_text = parse_ini_file(translation_file)
 
 
@@ -336,6 +346,11 @@ def settings_menu(stdscr, interface):
 
             menu_win.refresh()
             help_win.refresh()
+
+            # Get the parent directory of the script
+            app_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+            config_folder = "node-configs"
+
             if show_save_option and selected_index == len(options):
                 save_changes(interface, menu_path, modified_settings)
                 modified_settings.clear()
@@ -355,6 +370,7 @@ def settings_menu(stdscr, interface):
             if selected_option == "Exit":
                 break
 
+
             elif selected_option == "Export Config File":
                 filename = get_text_input("Enter a filename for the config file")
 
@@ -367,8 +383,6 @@ def settings_menu(stdscr, interface):
 
                 try:
                     config_text = config_export(interface)
-                    app_directory = os.path.dirname(os.path.abspath(__file__))
-                    config_folder = "node-configs"
                     yaml_file_path = os.path.join(app_directory, config_folder, filename)
 
                     if os.path.exists(yaml_file_path):
@@ -376,6 +390,7 @@ def settings_menu(stdscr, interface):
                         if overwrite == "No":
                             logging.info("Export cancelled: User chose not to overwrite.")
                             continue  # Return to menu
+
                     os.makedirs(os.path.dirname(yaml_file_path), exist_ok=True)
                     with open(yaml_file_path, "w", encoding="utf-8") as file:
                         file.write(config_text)
@@ -392,8 +407,6 @@ def settings_menu(stdscr, interface):
                 continue
 
             elif selected_option == "Load Config File":
-                app_directory = os.path.dirname(os.path.abspath(__file__))
-                config_folder = "node-configs"
                 folder_path = os.path.join(app_directory, config_folder)
 
                 # Check if folder exists and is not empty
