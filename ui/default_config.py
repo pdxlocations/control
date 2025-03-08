@@ -2,6 +2,15 @@ import logging
 import json
 import os
 
+# Get the parent directory of the script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
+
+# Paths
+json_file_path = os.path.join(parent_dir, "config.json")
+log_file_path = os.path.join(parent_dir, "client.log")
+db_file_path = os.path.join(parent_dir, "client.db")
+
 def format_json_single_line_arrays(data, indent=4):
     """
     Formats JSON with arrays on a single line while keeping other elements properly indented.
@@ -34,9 +43,6 @@ def update_dict(default, actual):
     return updated
 
 def initialize_config():
-    app_directory = os.path.dirname(os.path.abspath(__file__))
-    json_file_path = os.path.join(app_directory, "config.json")
-
     COLOR_CONFIG_DARK = {
         "default": ["white", "black"],
         "background": [" ", "black"],
@@ -61,7 +67,6 @@ def initialize_config():
         "settings_warning": ["red", "black"],
         "settings_note": ["green", "black"]
     }
-
     COLOR_CONFIG_LIGHT = {
         "default": ["black", "white"],
         "background": [" ", "white"],
@@ -112,10 +117,9 @@ def initialize_config():
         "settings_warning": ["green", "black"],
         "settings_note": ["green", "black"]
     }
-
     default_config_variables = {
-        "db_file_path": os.path.join(app_directory, "client.db"),
-        "log_file_path": os.path.join(app_directory, "client.log"),
+        "db_file_path": db_file_path,
+        "log_file_path": log_file_path,
         "message_prefix": ">>",
         "sent_message_prefix": ">> Sent",
         "notification_symbol": "*",
