@@ -40,7 +40,7 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
         # Track visible range
     global start_index
     if 'start_index' not in globals():
-        start_index = 0  # Initialize if not set
+        start_index = [0]  # Initialize if not set
 
     # Determine the available height for the menu
     max_menu_height = curses.LINES 
@@ -94,7 +94,7 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
 
     menu_win.refresh()
     menu_pad.refresh(
-        start_index, 0,
+        start_index[-1], 0,
         menu_win.getbegyx()[0] + 3, menu_win.getbegyx()[1] + 4,
         menu_win.getbegyx()[0] + 3 + menu_win.getmaxyx()[0] - 5 - (2 if show_save_option else 0),
         menu_win.getbegyx()[1] + menu_win.getmaxyx()[1] - 8
@@ -251,19 +251,19 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
     max_index = len(options) + (1 if show_save_option else 0) - 1
     visible_height = menu_win.getmaxyx()[0] - 5 - (2 if show_save_option else 0)
 
-    # Track visible range
-    global start_index
-    if 'start_index' not in globals():
-        start_index = 0  # Initialize if not set
+    # # Track visible range
+    # global start_index
+    # if 'start_index' not in globals():
+    #     start_index = 0  # Initialize if not set
 
     # Adjust start_index only when moving out of visible range
-    if new_idx < start_index:  # Moving above the visible area
-        start_index = new_idx
-    elif new_idx >= start_index + visible_height:  # Moving below the visible area
-        start_index = new_idx - visible_height 
+    if new_idx < start_index[-1]:  # Moving above the visible area
+        start_index[-1] = new_idx
+    elif new_idx >= start_index[-1] + visible_height:  # Moving below the visible area
+        start_index[-1] = new_idx - visible_height 
 
     # Ensure start_index is within bounds
-    start_index = max(0, min(start_index, max_index - visible_height + 1))
+    start_index[-1] = max(0, min(start_index[-1], max_index - visible_height + 1))
 
     # Clear old selection
     if show_save_option and old_idx == max_index:
@@ -280,7 +280,7 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
     menu_win.refresh()
     
     # Refresh pad only if scrolling is needed
-    menu_pad.refresh(start_index, 0,
+    menu_pad.refresh(start_index[-1], 0,
                      menu_win.getbegyx()[0] + 3, menu_win.getbegyx()[1] + 4,
                      menu_win.getbegyx()[0] + 3 + visible_height, 
                      menu_win.getbegyx()[1] + menu_win.getmaxyx()[1] - 8)
@@ -355,6 +355,7 @@ def settings_menu(stdscr, interface):
 
         elif key == curses.KEY_RIGHT or key == ord('\n'):
             need_redraw = True
+            start_index.append(0)
             menu_win.erase()
             help_win.erase()
 
@@ -594,6 +595,7 @@ def settings_menu(stdscr, interface):
                 for step in menu_path[1:]:
                     current_menu = current_menu.get(step, {})
                 selected_index = menu_index.pop()
+                start_index.pop()
 
         elif key == 27:  # Escape key
             menu_win.erase()
