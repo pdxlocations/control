@@ -391,18 +391,38 @@ def get_list_input(prompt, current_option, list_options):
 
 
 def move_highlight(old_idx, new_idx, options, list_win, list_pad):
+
+    global scroll_offset
+    if 'scroll_offset' not in globals():
+        scroll_offset = 0  # Initialize if not set
+
     if old_idx == new_idx:
-        return # no-op
+        return  # No-op
 
+    max_index = len(options) - 1
+    visible_height = list_win.getmaxyx()[0] - 5
+
+    # Adjust scroll_offset only when moving out of visible range
+    if new_idx < scroll_offset:  # Moving above the visible area
+        scroll_offset = new_idx
+    elif new_idx >= scroll_offset + visible_height:  # Moving below the visible area
+        scroll_offset = new_idx - visible_height
+
+    # Ensure scroll_offset is within bounds
+    scroll_offset = max(0, min(scroll_offset, max_index - visible_height + 1))
+
+    # Clear old highlight
     list_pad.chgat(old_idx, 0, list_pad.getmaxyx()[1], get_color("settings_default"))
-    list_pad.chgat(new_idx, 0, list_pad.getmaxyx()[1], get_color("settings_default", reverse = True))
+
+    # Highlight new selection
+    list_pad.chgat(new_idx, 0, list_pad.getmaxyx()[1], get_color("settings_default", reverse=True))
 
     list_win.refresh()
-
-    start_index = max(0, new_idx - (list_win.getmaxyx()[0] - 5))
-
-    list_win.refresh()
-    list_pad.refresh(start_index, 0,
-                     list_win.getbegyx()[0] + 3, list_win.getbegyx()[1] + 4,
-                     list_win.getbegyx()[0] + list_win.getmaxyx()[0] - 2, list_win.getbegyx()[1] + 4 + list_win.getmaxyx()[1] - 4)
     
+    # Refresh pad only if scrolling is needed
+    list_pad.refresh(scroll_offset, 0,
+                     list_win.getbegyx()[0] + 3, list_win.getbegyx()[1] + 4,
+                     list_win.getbegyx()[0] + 3 + visible_height, 
+                     list_win.getbegyx()[1] + list_win.getmaxyx()[1] - 4)
+
+    return scroll_offset  # Return updated scroll_offset to be stored externally

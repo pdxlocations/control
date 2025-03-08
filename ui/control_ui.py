@@ -251,11 +251,6 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
     max_index = len(options) + (1 if show_save_option else 0) - 1
     visible_height = menu_win.getmaxyx()[0] - 5 - (2 if show_save_option else 0)
 
-    # # Track visible range
-    # global start_index
-    # if 'start_index' not in globals():
-    #     start_index = 0  # Initialize if not set
-
     # Adjust start_index only when moving out of visible range
     if new_idx < start_index[-1]:  # Moving above the visible area
         start_index[-1] = new_idx
@@ -595,7 +590,12 @@ def settings_menu(stdscr, interface):
                 for step in menu_path[1:]:
                     current_menu = current_menu.get(step, {})
                 selected_index = menu_index.pop()
+
+
+
+                
                 start_index.pop()
+                
 
         elif key == 27:  # Escape key
             menu_win.erase()
