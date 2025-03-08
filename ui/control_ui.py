@@ -241,41 +241,50 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
 
 
 def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path, max_help_lines):
-
     if old_idx == new_idx:  # No-op
         return
 
     max_index = len(options) + (1 if show_save_option else 0) - 1
+    visible_height = menu_win.getmaxyx()[0] - 5 - (2 if show_save_option else 0)
 
-    if show_save_option and old_idx == max_index:  # Special case un-highlight "Save" option
+    # Track visible range
+    global start_index
+    if 'start_index' not in globals():
+        start_index = 0  # Initialize if not set
+
+    # Adjust start_index only when moving out of visible range
+    if new_idx < start_index:  # Moving above the visible area
+        start_index = new_idx
+    elif new_idx >= start_index + visible_height:  # Moving below the visible area
+        start_index = new_idx - visible_height 
+
+    # Ensure start_index is within bounds
+    start_index = max(0, min(start_index, max_index - visible_height + 1))
+
+    # Clear old selection
+    if show_save_option and old_idx == max_index:
         menu_win.chgat(menu_win.getmaxyx()[0] - 2, (width - len(save_option)) // 2, len(save_option), get_color("settings_save"))
     else:
         menu_pad.chgat(old_idx, 0, menu_pad.getmaxyx()[1], get_color("settings_sensitive") if options[old_idx] in sensitive_settings else get_color("settings_default"))
 
-    if show_save_option and new_idx == max_index:  # Special case highlight "Save" option
+    # Highlight new selection
+    if show_save_option and new_idx == max_index:
         menu_win.chgat(menu_win.getmaxyx()[0] - 2, (width - len(save_option)) // 2, len(save_option), get_color("settings_save", reverse=True))
     else:
         menu_pad.chgat(new_idx, 0, menu_pad.getmaxyx()[1], get_color("settings_sensitive", reverse=True) if options[new_idx] in sensitive_settings else get_color("settings_default", reverse=True))
 
     menu_win.refresh()
-
-    # Define window height without padding
-    visible_height = menu_win.getmaxyx()[0] - 5 - (2 if show_save_option else 0)
-
-    # Compute the new start index
-    start_index = max(0, new_idx - visible_height - (1 if show_save_option and new_idx == max_index else 0))
-
+    
+    # Refresh pad only if scrolling is needed
     menu_pad.refresh(start_index, 0,
-                    menu_win.getbegyx()[0] + 3, menu_win.getbegyx()[1] + 4,
-                    menu_win.getbegyx()[0] + 3 + visible_height, 
-                    menu_win.getbegyx()[1] + menu_win.getmaxyx()[1] - 8)
+                     menu_win.getbegyx()[0] + 3, menu_win.getbegyx()[1] + 4,
+                     menu_win.getbegyx()[0] + 3 + visible_height, 
+                     menu_win.getbegyx()[1] + menu_win.getmaxyx()[1] - 8)
 
-    # Transform menu path
+    # Update help window
     transformed_path = transform_menu_path(menu_path)
     selected_option = options[new_idx] if new_idx < len(options) else None
     help_y = menu_win.getbegyx()[0] + menu_win.getmaxyx()[0]
-
-    # Call helper function to update the help window
     help_win = update_help_window(help_win, help_text, transformed_path, selected_option, max_help_lines, width, help_y, menu_win.getbegyx()[1])
 
 
