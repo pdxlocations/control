@@ -37,6 +37,10 @@ field_mapping, help_text = parse_ini_file(translation_file)
 def display_menu(current_menu, menu_path, selected_index, show_save_option, help_text):
     min_help_window_height = 6
     num_items = len(current_menu) + (1 if show_save_option else 0)
+        # Track visible range
+    global start_index
+    if 'start_index' not in globals():
+        start_index = 0  # Initialize if not set
 
     # Determine the available height for the menu
     max_menu_height = curses.LINES 
@@ -90,7 +94,7 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
 
     menu_win.refresh()
     menu_pad.refresh(
-        0, 0,
+        start_index, 0,
         menu_win.getbegyx()[0] + 3, menu_win.getbegyx()[1] + 4,
         menu_win.getbegyx()[0] + 3 + menu_win.getmaxyx()[0] - 5 - (2 if show_save_option else 0),
         menu_win.getbegyx()[1] + menu_win.getmaxyx()[1] - 8
