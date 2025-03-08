@@ -259,11 +259,16 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
 
     menu_win.refresh()
 
-    start_index = max(0, new_idx - (menu_win.getmaxyx()[0] - 5 - (2 if show_save_option else 0)) - (1 if show_save_option and new_idx == max_index else 0))
+    # Define window height without padding
+    visible_height = menu_win.getmaxyx()[0] - 5 - (2 if show_save_option else 0)
+
+    # Compute the new start index
+    start_index = max(0, new_idx - visible_height - (1 if show_save_option and new_idx == max_index else 0))
+
     menu_pad.refresh(start_index, 0,
-                     menu_win.getbegyx()[0] + 3, menu_win.getbegyx()[1] + 4,
-                     menu_win.getbegyx()[0] + 3 + menu_win.getmaxyx()[0] - 5 - (2 if show_save_option else 0), 
-                     menu_win.getbegyx()[1] + menu_win.getmaxyx()[1] - 8)
+                    menu_win.getbegyx()[0] + 3, menu_win.getbegyx()[1] + 4,
+                    menu_win.getbegyx()[0] + 3 + visible_height, 
+                    menu_win.getbegyx()[1] + menu_win.getmaxyx()[1] - 8)
 
     # Transform menu path
     transformed_path = transform_menu_path(menu_path)
