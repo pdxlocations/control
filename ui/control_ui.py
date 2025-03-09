@@ -102,23 +102,15 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
         menu_win.getbegyx()[1] + menu_win.getmaxyx()[1] - 8
     )
 
-    draw_arrows(menu_win, start_index, num_items, show_save_option)
+    max_index = num_items + (1 if show_save_option else 0) - 1
+    visible_height = menu_win.getmaxyx()[0] - 5 - (2 if show_save_option else 0)
+
+    draw_arrows(menu_win, visible_height, max_index, start_index)
+
     return menu_win, menu_pad
 
 
 
-
-
-def draw_arrows(win, start_index, num_items, show_save_option):
-
-    # Get window size
-    height, width = win.getmaxyx()
-
-    if show_save_option:
-        height -= 1
-
-    win.addstr(3, 2, "▲", get_color("settings_default"))
-    win.addstr(height - 3, 2, "▼", get_color("settings_default"))
 
 
 
@@ -306,6 +298,22 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
     help_y = menu_win.getbegyx()[0] + menu_win.getmaxyx()[0]
     help_win = update_help_window(help_win, help_text, transformed_path, selected_option, max_help_lines, width, help_y, menu_win.getbegyx()[1])
 
+    draw_arrows(menu_win, visible_height, max_index, start_index)
+
+
+def draw_arrows(win, visible_height, max_index, start_index):
+
+    if visible_height < max_index:
+        if start_index[-1] > 0:
+            win.addstr(3, 2, "▲", get_color("settings_default"))
+        else:
+            win.addstr(3, 2, " ", get_color("settings_default"))
+
+        if max_index - start_index[-1] > visible_height:
+            win.addstr(visible_height + 3, 2, "▼", get_color("settings_default"))
+        else:
+            win.addstr(visible_height + 3, 2, " ", get_color("settings_default"))
+        
 
 def settings_menu(stdscr, interface):
     curses.update_lines_cols()

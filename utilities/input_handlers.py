@@ -372,6 +372,11 @@ def get_list_input(prompt, current_option, list_options):
     list_pad.refresh(0, 0,
                     list_win.getbegyx()[0] + 3, list_win.getbegyx()[1] + 4,
                     list_win.getbegyx()[0] + list_win.getmaxyx()[0] - 2, list_win.getbegyx()[1] + list_win.getmaxyx()[1] - 4)
+    
+    max_index = len(list_options) - 1
+    visible_height = list_win.getmaxyx()[0] - 5
+
+    draw_arrows(list_win, visible_height, max_index, 0)
 
     while True:
         key = list_win.getch()
@@ -424,5 +429,22 @@ def move_highlight(old_idx, new_idx, options, list_win, list_pad):
                      list_win.getbegyx()[0] + 3, list_win.getbegyx()[1] + 4,
                      list_win.getbegyx()[0] + 3 + visible_height, 
                      list_win.getbegyx()[1] + list_win.getmaxyx()[1] - 4)
+    
+    draw_arrows(list_win, visible_height, max_index, scroll_offset)
 
     return scroll_offset  # Return updated scroll_offset to be stored externally
+
+
+def draw_arrows(win, visible_height, max_index, start_index):
+
+    if visible_height < max_index:
+        if start_index > 0:
+            win.addstr(3, 2, "▲", get_color("settings_default"))
+        else:
+            win.addstr(3, 2, " ", get_color("settings_default"))
+
+        if max_index - start_index > visible_height:
+            win.addstr(visible_height + 3, 2, "▼", get_color("settings_default"))
+        else:
+            win.addstr(visible_height + 3, 2, " ", get_color("settings_default"))
+        
