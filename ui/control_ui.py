@@ -458,6 +458,7 @@ def settings_menu(stdscr, interface):
                 if confirmation == "Yes":
                     interface.localNode.reboot()
                     logging.info(f"Node Reboot Requested by menu")
+                start_index.pop()
                 continue
 
             elif selected_option == "Reset Node DB":
@@ -465,6 +466,7 @@ def settings_menu(stdscr, interface):
                 if confirmation == "Yes":
                     interface.localNode.resetNodeDb()
                     logging.info(f"Node DB Reset Requested by menu")
+                start_index.pop()
                 continue
 
             elif selected_option == "Shutdown":
@@ -472,6 +474,7 @@ def settings_menu(stdscr, interface):
                 if confirmation == "Yes":
                     interface.localNode.shutdown()
                     logging.info(f"Node Shutdown Requested by menu")
+                start_index.pop()
                 continue
 
             elif selected_option == "Factory Reset":
@@ -479,6 +482,7 @@ def settings_menu(stdscr, interface):
                 if confirmation == "Yes":
                     interface.localNode.factoryReset()
                     logging.info(f"Factory Reset Requested by menu")
+                start_index.pop()
                 continue
 
             # elif selected_option == "App Settings":
