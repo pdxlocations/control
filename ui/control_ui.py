@@ -386,7 +386,7 @@ def settings_menu(stdscr, interface):
                 filename = get_text_input("Enter a filename for the config file")
                 if not filename:
                     logging.info("Export aborted: No filename provided.")
-                    
+                    start_index.pop()
                     continue  # Go back to the menu
                 if not filename.lower().endswith(".yaml"):
                     filename += ".yaml"
@@ -399,14 +399,14 @@ def settings_menu(stdscr, interface):
                         overwrite = get_list_input(f"{filename} already exists. Overwrite?", None, ["Yes", "No"])
                         if overwrite == "No":
                             logging.info("Export cancelled: User chose not to overwrite.")
+                            start_index.pop()
                             continue  # Return to menu
-
                     os.makedirs(os.path.dirname(yaml_file_path), exist_ok=True)
                     with open(yaml_file_path, "w", encoding="utf-8") as file:
                         file.write(config_text)
                     logging.info(f"Config file saved to {yaml_file_path}")
                     dialog(stdscr, "Config File Saved:", yaml_file_path)
-                    
+                    start_index.pop()
                     continue
                 except PermissionError:
                     logging.error(f"Permission denied: Unable to write to {yaml_file_path}")
@@ -636,4 +636,3 @@ def set_region(interface):
 
     node.localConfig.lora.region = new_region_number
     node.writeConfig("lora")
-    
