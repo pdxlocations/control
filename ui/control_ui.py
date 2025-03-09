@@ -92,6 +92,8 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
     # Draw help window with dynamically updated max_help_lines
     draw_help_window(start_y, start_x, menu_height, max_help_lines, current_menu, selected_index, transformed_path)
 
+
+
     menu_win.refresh()
     menu_pad.refresh(
         start_index[-1], 0,
@@ -100,7 +102,25 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
         menu_win.getbegyx()[1] + menu_win.getmaxyx()[1] - 8
     )
 
+    draw_arrows(menu_win, start_index, num_items, show_save_option)
     return menu_win, menu_pad
+
+
+
+
+
+def draw_arrows(win, start_index, num_items, show_save_option):
+
+    # Get window size
+    height, width = win.getmaxyx()
+
+    if show_save_option:
+        height -= 1
+
+    win.addstr(3, 2, "▲", get_color("settings_default"))
+    win.addstr(height - 3, 2, "▼", get_color("settings_default"))
+
+
 
 def draw_help_window(menu_start_y, menu_start_x, menu_height, max_help_lines, current_menu, selected_index, transformed_path):
     global help_win
