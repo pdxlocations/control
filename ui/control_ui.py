@@ -290,7 +290,7 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
     menu_pad.refresh(start_index[-1], 0,
                      menu_win.getbegyx()[0] + 3, menu_win.getbegyx()[1] + 4,
                      menu_win.getbegyx()[0] + 3 + visible_height, 
-                     menu_win.getbegyx()[1] + menu_win.getmaxyx()[1] - 8)
+                     menu_win.getbegyx()[1] + menu_win.getmaxyx()[1] - 4)
 
     # Update help window
     transformed_path = transform_menu_path(menu_path)
