@@ -386,6 +386,7 @@ def settings_menu(stdscr, interface):
                 filename = get_text_input("Enter a filename for the config file")
                 if not filename:
                     logging.info("Export aborted: No filename provided.")
+                    
                     continue  # Go back to the menu
                 if not filename.lower().endswith(".yaml"):
                     filename += ".yaml"
@@ -413,8 +414,9 @@ def settings_menu(stdscr, interface):
                     logging.error(f"OS error while saving config: {e}")
                 except Exception as e:
                     logging.error(f"Unexpected error: {e}")
+                start_index.pop()
                 continue
-
+                
             elif selected_option == "Load Config File":
                 folder_path = os.path.join(app_directory, config_folder)
 
@@ -436,6 +438,7 @@ def settings_menu(stdscr, interface):
                     overwrite = get_list_input(f"Are you sure you want to load {filename}?", None, ["Yes", "No"])
                     if overwrite == "Yes":
                         config_import(interface, file_path)
+                start_index.pop()
                 continue
 
             elif selected_option == "Config URL":
@@ -447,6 +450,7 @@ def settings_menu(stdscr, interface):
                     if overwrite == "Yes":
                         interface.localNode.setURL(new_value)
                         logging.info(f"New Config URL sent to node")
+                start_index.pop()
                 continue
 
             elif selected_option == "Reboot":
@@ -509,6 +513,8 @@ def settings_menu(stdscr, interface):
                     for option, (field, value) in current_menu.items():
                         modified_settings[option] = value
 
+                    start_index.pop()
+
                 elif selected_option in ['latitude', 'longitude', 'altitude']:
                     new_value = get_text_input(f"{human_readable_name} is currently: {current_value}")
                     new_value = current_value if new_value is None else new_value
@@ -518,37 +524,47 @@ def settings_menu(stdscr, interface):
                         if option in current_menu:
                             modified_settings[option] = current_menu[option][1]
 
+                    start_index.pop()
+
                 elif selected_option == "admin_key":
                     new_values = get_admin_key_input(current_value)
                     new_value = current_value if new_values is None else [base64.b64decode(key) for key in new_values]
+                    start_index.pop()
 
                 elif field.type == 8:  # Handle boolean type
                     new_value = get_list_input(human_readable_name, str(current_value),  ["True", "False"])
                     new_value = new_value == "True" or new_value is True
+                    start_index.pop()
 
                 elif field.label == field.LABEL_REPEATED:  # Handle repeated field - Not currently used
                     new_value = get_repeated_input(current_value)
                     new_value = current_value if new_value is None else new_value.split(", ")
+                    start_index.pop()
 
                 elif field.enum_type:  # Enum field
                     enum_options = {v.name: v.number for v in field.enum_type.values}
                     new_value_name = get_list_input(human_readable_name, current_value, list(enum_options.keys()))
                     new_value = enum_options.get(new_value_name, current_value)
+                    start_index.pop()
 
                 elif field.type == 7: # Field type 7 corresponds to FIXED32
                     new_value = get_fixed32_input(current_value)
+                    start_index.pop()
 
                 elif field.type == 13: # Field type 13 corresponds to UINT32
                     new_value = get_text_input(f"{human_readable_name} is currently: {current_value}")
                     new_value = current_value if new_value is None else int(new_value)
+                    start_index.pop()
 
                 elif field.type == 2: # Field type 13 corresponds to INT64
                     new_value = get_text_input(f"{human_readable_name} is currently: {current_value}")
                     new_value = current_value if new_value is None else float(new_value)
+                    start_index.pop()
 
                 else:  # Handle other field types
                     new_value = get_text_input(f"{human_readable_name} is currently: {current_value}")
                     new_value = current_value if new_value is None else new_value
+                    start_index.pop()
                 
                 for key in menu_path[3:]:  # Skip "Main Menu"
                     modified_settings = modified_settings.setdefault(key, {})
@@ -567,6 +583,7 @@ def settings_menu(stdscr, interface):
                 menu_path.append(selected_option)
                 menu_index.append(selected_index)
                 selected_index = 0
+
 
         elif key == curses.KEY_LEFT:
             need_redraw = True
@@ -590,13 +607,8 @@ def settings_menu(stdscr, interface):
                 for step in menu_path[1:]:
                     current_menu = current_menu.get(step, {})
                 selected_index = menu_index.pop()
-
-
-
-                
                 start_index.pop()
                 
-
         elif key == 27:  # Escape key
             menu_win.erase()
             menu_win.refresh()
