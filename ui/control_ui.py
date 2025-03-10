@@ -92,8 +92,6 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
     # Draw help window with dynamically updated max_help_lines
     draw_help_window(start_y, start_x, menu_height, max_help_lines, current_menu, selected_index, transformed_path)
 
-
-
     menu_win.refresh()
     menu_pad.refresh(
         start_index[-1], 0,
@@ -286,6 +284,7 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
     else:
         menu_pad.chgat(new_idx, 0, menu_pad.getmaxyx()[1], get_color("settings_sensitive", reverse=True) if options[new_idx] in sensitive_settings else get_color("settings_default", reverse=True))
 
+
     menu_win.refresh()
     
     # Refresh pad only if scrolling is needed
@@ -304,16 +303,17 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
 
 
 def draw_arrows(win, visible_height, max_index, start_index, show_save_option):
-    
-    vh = visible_height + (1 if show_save_option else 0)
 
-    if vh < max_index:
+    # vh = visible_height + (1 if show_save_option else 0)
+    mi = max_index - (2 if show_save_option else 0) 
+
+    if visible_height < mi:
         if start_index[-1] > 0:
             win.addstr(3, 2, "▲", get_color("settings_default"))
         else:
             win.addstr(3, 2, " ", get_color("settings_default"))
 
-        if max_index - start_index[-1] > vh:
+        if mi - start_index[-1] >= visible_height + (0 if show_save_option else 1) :
             win.addstr(visible_height + 3, 2, "▼", get_color("settings_default"))
         else:
             win.addstr(visible_height + 3, 2, " ", get_color("settings_default"))
