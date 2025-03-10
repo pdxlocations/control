@@ -105,7 +105,7 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
     max_index = num_items + (1 if show_save_option else 0) - 1
     visible_height = menu_win.getmaxyx()[0] - 5 - (2 if show_save_option else 0)
 
-    draw_arrows(menu_win, visible_height, max_index, start_index)
+    draw_arrows(menu_win, visible_height, max_index, start_index, show_save_option)
 
     return menu_win, menu_pad
 
@@ -255,7 +255,6 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
 
     return wrapped_help
 
-
 def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path, max_help_lines):
     if old_idx == new_idx:  # No-op
         return
@@ -264,10 +263,13 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
     visible_height = menu_win.getmaxyx()[0] - 5 - (2 if show_save_option else 0)
 
     # Adjust start_index only when moving out of visible range
-    if new_idx < start_index[-1]:  # Moving above the visible area
+    if new_idx == max_index and show_save_option:
+        pass
+    elif new_idx < start_index[-1]:  # Moving above the visible area
         start_index[-1] = new_idx
     elif new_idx >= start_index[-1] + visible_height:  # Moving below the visible area
-        start_index[-1] = new_idx - visible_height 
+        start_index[-1] = new_idx - visible_height
+    pass
 
     # Ensure start_index is within bounds
     start_index[-1] = max(0, min(start_index[-1], max_index - visible_height + 1))
@@ -298,18 +300,20 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
     help_y = menu_win.getbegyx()[0] + menu_win.getmaxyx()[0]
     help_win = update_help_window(help_win, help_text, transformed_path, selected_option, max_help_lines, width, help_y, menu_win.getbegyx()[1])
 
-    draw_arrows(menu_win, visible_height, max_index, start_index)
+    draw_arrows(menu_win, visible_height, max_index, start_index, show_save_option)
 
 
-def draw_arrows(win, visible_height, max_index, start_index):
+def draw_arrows(win, visible_height, max_index, start_index, show_save_option):
+    
+    vh = visible_height + (1 if show_save_option else 0)
 
-    if visible_height < max_index:
+    if vh < max_index:
         if start_index[-1] > 0:
             win.addstr(3, 2, "▲", get_color("settings_default"))
         else:
             win.addstr(3, 2, " ", get_color("settings_default"))
 
-        if max_index - start_index[-1] > visible_height:
+        if max_index - start_index[-1] > vh:
             win.addstr(visible_height + 3, 2, "▼", get_color("settings_default"))
         else:
             win.addstr(visible_height + 3, 2, " ", get_color("settings_default"))
