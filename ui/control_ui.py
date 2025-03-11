@@ -108,10 +108,6 @@ def display_menu(current_menu, menu_path, selected_index, show_save_option, help
     return menu_win, menu_pad
 
 
-
-
-
-
 def draw_help_window(menu_start_y, menu_start_x, menu_height, max_help_lines, current_menu, selected_index, transformed_path):
     global help_win
 
@@ -159,7 +155,6 @@ def update_help_window(help_win, help_text, transformed_path, selected_option, m
 
     help_win.refresh()
     return help_win
-
 
 
 def get_wrapped_help_text(help_text, transformed_path, selected_option, width, max_lines):
@@ -253,6 +248,7 @@ def get_wrapped_help_text(help_text, transformed_path, selected_option, width, m
 
     return wrapped_help
 
+
 def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_pad, help_win, help_text, menu_path, max_help_lines):
     if old_idx == new_idx:  # No-op
         return
@@ -283,7 +279,6 @@ def move_highlight(old_idx, new_idx, options, show_save_option, menu_win, menu_p
         menu_win.chgat(menu_win.getmaxyx()[0] - 2, (width - len(save_option)) // 2, len(save_option), get_color("settings_save", reverse=True))
     else:
         menu_pad.chgat(new_idx, 0, menu_pad.getmaxyx()[1], get_color("settings_sensitive", reverse=True) if options[new_idx] in sensitive_settings else get_color("settings_default", reverse=True))
-
 
     menu_win.refresh()
     

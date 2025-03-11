@@ -390,8 +390,12 @@ def get_list_input(prompt, current_option, list_options):
             selected_index = min(len(list_options) - 1, selected_index + 1)
             move_highlight(old_selected_index, selected_index, list_options, list_win, list_pad)
         elif key == ord('\n'):  # Enter key
+            list_win.clear()
+            list_win.refresh()
             return list_options[selected_index]
         elif key == 27 or key == curses.KEY_LEFT:  # ESC or Left Arrow
+            list_win.clear()
+            list_win.refresh()
             return current_option
 
 
