@@ -386,10 +386,6 @@ def settings_menu(stdscr, interface):
             menu_win.refresh()
             help_win.refresh()
 
-            # Get the parent directory of the script
-            app_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-            config_folder = "node-configs"
-
             if show_save_option and selected_index == len(options):
                 save_changes(interface, menu_path, modified_settings)
                 modified_settings.clear()
@@ -401,7 +397,6 @@ def settings_menu(stdscr, interface):
                     for step in menu_path[1:]:
                         current_menu = current_menu.get(step, {})
                     selected_index = 0
-
                 continue
 
             selected_option = options[selected_index]
@@ -420,7 +415,7 @@ def settings_menu(stdscr, interface):
 
                 try:
                     config_text = config_export(interface)
-                    yaml_file_path = os.path.join(app_directory, config_folder, filename)
+                    yaml_file_path = os.path.join(config_folder, filename)
 
                     if os.path.exists(yaml_file_path):
                         overwrite = get_list_input(f"{filename} already exists. Overwrite?", None, ["Yes", "No"])
@@ -445,14 +440,13 @@ def settings_menu(stdscr, interface):
                 continue
                 
             elif selected_option == "Load Config File":
-                folder_path = os.path.join(app_directory, config_folder)
 
                 # Check if folder exists and is not empty
-                if not os.path.exists(folder_path) or not any(os.listdir(folder_path)):
+                if not os.path.exists(config_folder) or not any(os.listdir(config_folder)):
                     dialog(stdscr, "", " No config files found. Export a config first.")
                     continue  # Return to menu
 
-                file_list = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+                file_list = [f for f in os.listdir(config_folder) if os.path.isfile(os.path.join(config_folder, f))]
 
                 # Ensure file_list is not empty before proceeding
                 if not file_list:
@@ -461,7 +455,7 @@ def settings_menu(stdscr, interface):
 
                 filename = get_list_input("Choose a config file", None, file_list)
                 if filename:
-                    file_path = os.path.join(app_directory, config_folder, filename)
+                    file_path = os.path.join(config_folder, filename)
                     overwrite = get_list_input(f"Are you sure you want to load {filename}?", None, ["Yes", "No"])
                     if overwrite == "Yes":
                         config_import(interface, file_path)
